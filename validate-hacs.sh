@@ -51,10 +51,24 @@ done
 # Check hacs.json requirements
 echo ""
 echo "Validating hacs.json content..."
-if ! grep -q '"name"' hacs.json; then
-    echo "❌ hacs.json missing 'name' field"
-    exit 1
-fi
+required_hacs_fields=("name")
+for field in "${required_hacs_fields[@]}"; do
+    if ! grep -q "\"$field\"" hacs.json; then
+        echo "❌ hacs.json missing '$field' field"
+        exit 1
+    fi
+done
+
+# Check for invalid hacs.json fields
+echo "Checking for invalid hacs.json fields..."
+invalid_fields=("domains" "homeassistant" "iot_class")
+for field in "${invalid_fields[@]}"; do
+    if grep -q "\"$field\"" hacs.json; then
+        echo "❌ hacs.json contains invalid field '$field' (should be in manifest.json only)"
+        exit 1
+    fi
+done
+echo "✅ hacs.json is valid"
 
 # Check manifest.json requirements
 echo ""
