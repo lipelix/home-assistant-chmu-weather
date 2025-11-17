@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Meterologická stanice ČHMÚ",
+        "description": "Vyberte meterologickou stanici z {stations_count} dostupných stanic v České republice.\n\nNejbližší stanice k vaší poloze: **{nearest_station}** (přibližně {distance} km)",
+        "data": {
+          "station_id": "Meterologická stanice"
+        },
+        "data_description": {
+          "station_id": "Nejbližší stanice je předvybrána podle vaší domácí polohy. V případě potřeby můžete vybrat jinou stanici."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nepodařilo se připojit k API ČHMÚ",
+      "unknown": "Došlo k neočekávané chybě"
+    },
+    "abort": {
+      "already_configured": "Tato stanice je již nakonfigurována"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Teplota"
+      },
+      "humidity": {
+        "name": "Vlhkost"
+      },
+      "pressure": {
+        "name": "Tlak"
+      },
+      "precipitation": {
+        "name": "Srážky"
+      },
+      "wind_speed": {
+        "name": "Rychlost větru"
+      },
+      "wind_direction": {
+        "name": "Směr větru"
+      }
+    }
+  }
+}

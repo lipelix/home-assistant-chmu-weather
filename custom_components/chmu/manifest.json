@@ -1,0 +1,13 @@
+{
+  "domain": "chmu",
+  "name": "ČHMÚ Weather",
+  "codeowners": ["@lipelix"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/lipelix/home-assistant-chmu-weather",
+  "issue_tracker": "https://github.com/lipelix/home-assistant-chmu-weather/issues",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "requirements": ["requests>=2.31.0"],
+  "version": "1.0.0"
+}
