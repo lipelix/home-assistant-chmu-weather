@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ČHMÚ Weather Station",
+        "description": "Select a weather station from {stations_count} available stations across Czech Republic.\\n\\nNearest station to your location: **{nearest_station}** (approximately {distance} km away)",
+        "data": {
+          "station_id": "Weather Station"
+        },
+        "data_description": {
+          "station_id": "The nearest station is pre-selected based on your Home location. You can choose a different station if preferred."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to ČHMÚ API",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This station is already configured"
+    }
+  }
+}
