@@ -4,7 +4,7 @@ A Home Assistant integration to fetch weather data from ČHMÚ (Czech Hydrometeo
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://img.shields.io/github/v/release/lipelix/home-assistant-chmu-weather)](https://github.com/lipelix/home-assistant-chmu-weather/releases)
-[![License](https://img.shields.io/github/license/lipelix/home-assistant-chmu-weather)](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/LICENSE)
+[![Deploy](https://github.com/lipelix/home-assistant-chmu-weather/actions/workflows/ci.yml/badge.svg)](https://github.com/lipelix/home-assistant-chmu-weather/actions/workflows/ci.yml/badge.svg)
 
 ## Installation
 
