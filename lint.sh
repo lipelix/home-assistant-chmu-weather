@@ -1,18 +1,31 @@
 #!/bin/bash
-# Local lint script - run this before pushing
+# Local validation script - run this before pushing
 
 set -e
 
-echo "🔍 Running ruff linter..."
-if ! command -v ruff &> /dev/null; then
+echo "🔍 Running all checks..."
+echo ""
+
+# Find ruff - check venv first, then system
+if [ -f ".venv/bin/ruff" ]; then
+    RUFF=".venv/bin/ruff"
+elif command -v ruff &> /dev/null; then
+    RUFF="ruff"
+else
     echo "❌ ruff not found. Install it with: pip install -r requirements-dev.txt"
     exit 1
 fi
 
-echo "Checking for lint errors..."
-ruff check .
+echo "📝 Running ruff linter..."
+$RUFF check .
 
-echo "Checking formatting..."
-ruff format --check .
+echo ""
+echo "🎨 Checking formatting..."
+$RUFF format --check .
 
-echo "✅ All lint checks passed!"
+echo ""
+echo "🔍 Running HACS validation..."
+./validate-hacs.sh
+
+echo ""
+echo "✅ All checks passed!"
