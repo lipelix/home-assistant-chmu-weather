@@ -28,16 +28,17 @@ This project uses [Ruff](https://github.com/astral-sh/ruff) for linting and form
 
 Pre-commit hooks will automatically run ruff before each commit. If there are issues, the commit will be blocked until they're fixed.
 
-### Manual Linting
+### Manual Validation
 
-To run linting manually before pushing:
+To run all checks (linting + HACS validation) before pushing:
 
 ```bash
 ./lint.sh
 ```
 
-Or run ruff commands directly:
+Or run individual checks:
 
+**Linting:**
 ```bash
 # Check for lint errors
 ruff check .
@@ -52,6 +53,17 @@ ruff format --check .
 ruff format .
 ```
 
+**HACS Validation:**
+```bash
+./validate-hacs.sh
+```
+
+This checks:
+- Required files exist (hacs.json, manifest.json, README.md, LICENSE)
+- JSON files are valid
+- All required fields are present in manifest.json and hacs.json
+- Version format is valid (X.Y.Z)
+
 ### Running All Pre-commit Hooks Manually
 
 ```bash
@@ -61,10 +73,10 @@ pre-commit run --all-files
 ## Development Workflow
 
 1. Make your changes
-2. Run `./lint.sh` to check for errors (or rely on pre-commit hooks)
+2. Run `./lint.sh` to check for lint errors and HACS validation (or rely on pre-commit hooks for linting)
 3. Commit your changes (pre-commit will run automatically)
 4. Push to GitHub
 
 ## CI/CD
 
-GitHub Actions will automatically run linting on every push and pull request. Make sure to run linting locally to catch issues early!
+GitHub Actions will automatically run linting and HACS validation on every push and pull request. The workflow also runs daily to ensure ongoing compliance.
