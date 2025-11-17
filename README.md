@@ -4,6 +4,8 @@
 
 🇬🇧 **Home Assistant integration providing weather data from Czech Hydrometeorological Institute (ČHMÚ) meteorological stations. Primarily intended for Czech audience due to the geographic proximity of weather stations.**
 
+![Brno weather station](assets/brno_sensor_teaser.png)
+
 ---
 
 A Home Assistant integration to fetch weather data from ČHMÚ (Czech Hydrometeorological Institute).
