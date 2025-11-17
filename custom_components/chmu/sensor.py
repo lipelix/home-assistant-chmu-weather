@@ -1,6 +1,5 @@
 """Sensor platform for ČHMÚ Weather integration."""
 import logging
-from typing import Any, Dict, Optional
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
