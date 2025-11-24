@@ -1,5 +1,6 @@
 {
   "name": "ČHMÚ Weather",
   "content_in_root": false,
+  "country": "CZ",
   "render_readme": true
 }
