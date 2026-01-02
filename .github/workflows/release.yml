@@ -13,24 +13,24 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Get version from tag
         id: tag_name
         run: |
           echo "current_version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: Get Changelog Entry
         id: changelog_reader
         uses: mindsers/changelog-reader-action@v2
         with:
           version: ${{ steps.tag_name.outputs.current_version }}
           path: ./CHANGELOG.md
-      
+
       - name: Create ZIP file
         run: |
           cd custom_components/chmu
           zip -r ../../chmu.zip .
-      
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
