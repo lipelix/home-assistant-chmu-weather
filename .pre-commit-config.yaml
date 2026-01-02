@@ -20,3 +20,14 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: mixed-line-ending
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: python
+        pass_filenames: false
+        always_run: true
+        args: [tests/, -v]
+        additional_dependencies: [pytest>=8.3.0, requests>=2.31.0]
