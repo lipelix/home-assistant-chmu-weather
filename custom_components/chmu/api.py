@@ -1,7 +1,7 @@
 """API client for ČHMÚ Weather."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import requests
@@ -11,22 +11,44 @@ from .const import API_BASE_URL, API_METADATA_PATH, API_NOW_PATH
 _LOGGER = logging.getLogger(__name__)
 
 
+def _fetch_metadata_with_fallback(
+    session: requests.Session, log_context: str
+) -> Dict[str, Any]:
+    """Fetch today's metadata or fall back to previous day when necessary."""
+    date_str = datetime.now().strftime("%Y%m%d")
+    filename = f"meta1-{date_str}.json"
+    url = f"{API_BASE_URL}{API_METADATA_PATH}/{filename}"
+
+    _LOGGER.info("Fetching %s from: %s", log_context, url)
+
+    try:
+        response = session.get(url, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as err:
+        if err.response.status_code == 404:
+            # Try previous day's metadata
+            yesterday = datetime.now() - timedelta(days=1)
+            date_str = yesterday.strftime("%Y%m%d")
+            filename = f"meta1-{date_str}.json"
+            url = f"{API_BASE_URL}{API_METADATA_PATH}/{filename}"
+
+            _LOGGER.info(
+                "Today's metadata not found, fetching %s from: %s", log_context, url
+            )
+            response = session.get(url, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        raise
+
+
 def get_stations() -> Dict[str, str]:
     """Fetch available stations from ČHMÚ metadata."""
     session = requests.Session()
     session.headers.update({"User-Agent": "Home-Assistant-CHMU-Integration/1.0"})
 
-    # Try today's metadata first
-    date_str = datetime.now().strftime("%Y%m%d")
-    filename = f"meta1-{date_str}.json"
-    url = f"{API_BASE_URL}{API_METADATA_PATH}/{filename}"
-
-    _LOGGER.info(f"Fetching stations from: {url}")
-
     try:
-        response = session.get(url, timeout=30)
-        response.raise_for_status()
-        metadata = response.json()
+        metadata = _fetch_metadata_with_fallback(session, "stations")
 
         stations = {}
         values = metadata.get("data", {}).get("data", {}).get("values", [])
@@ -70,17 +92,8 @@ def get_stations_with_coords() -> Dict[str, Dict[str, Any]]:
     session = requests.Session()
     session.headers.update({"User-Agent": "Home-Assistant-CHMU-Integration/1.0"})
 
-    # Try today's metadata first
-    date_str = datetime.now().strftime("%Y%m%d")
-    filename = f"meta1-{date_str}.json"
-    url = f"{API_BASE_URL}{API_METADATA_PATH}/{filename}"
-
-    _LOGGER.info(f"Fetching stations with coordinates from: {url}")
-
     try:
-        response = session.get(url, timeout=30)
-        response.raise_for_status()
-        metadata = response.json()
+        metadata = _fetch_metadata_with_fallback(session, "stations with coordinates")
 
         stations = {}
         values = metadata.get("data", {}).get("data", {}).get("values", [])
