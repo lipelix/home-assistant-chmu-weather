@@ -120,11 +120,11 @@
 
 ## Security & Privacy
 
-✅ **Read-only access** - No authentication required (public data)  
-✅ **No user data collected** - Only fetches public weather data  
-✅ **HTTPS only** - Secure API communication  
-✅ **No external dependencies** - Uses Home Assistant's built-in libraries  
-✅ **Local storage** - All history stored in Home Assistant database  
+✅ **Read-only access** - No authentication required (public data)
+✅ **No user data collected** - Only fetches public weather data
+✅ **HTTPS only** - Secure API communication
+✅ **No external dependencies** - Uses Home Assistant's built-in libraries
+✅ **Local storage** - All history stored in Home Assistant database
 
 ## Testing Strategy
 
