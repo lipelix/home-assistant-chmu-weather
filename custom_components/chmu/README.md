@@ -50,7 +50,7 @@ The integration features **intelligent location-based selection**:
 **41+ professional meteorological stations** across Czech Republic, including:
 
 - Cheb
-- Karlovy Vary, Olšová Vrata  
+- Karlovy Vary, Olšová Vrata
 - Plzeň, Mikulka
 - Praha-Ruzyně
 - Brno-Tuřany

@@ -47,6 +47,37 @@ The integration is configured via the UI (Config Flow). No YAML configuration is
 - Provides temperature, humidity, and other meteorological data
 - Easy configuration through the Home Assistant UI
 
+## Development
+
+### Running Tests
+
+To run the tests locally:
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest tests/ -v
+```
+
+The test suite includes unit tests for API helpers and data parsing. Tests are automatically run via pre-commit hooks before each commit to ensure code quality.
+
+### Code Quality
+
+Before committing, ensure your code passes linting:
+
+```bash
+./lint.sh  # Runs ruff + HACS validation
+```
+
+Pre-commit hooks will automatically run ruff and pytest on commit. To set up pre-commit hooks:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
 ## Support
 
 If you have issues or questions, please:
@@ -56,4 +87,3 @@ If you have issues or questions, please:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
