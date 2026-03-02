@@ -41,6 +41,7 @@ async def async_setup_entry(
         ChmuPrecipitationSensor(coordinator, entry, station_id, station_name),
         ChmuWindSpeedSensor(coordinator, entry, station_id, station_name),
         ChmuWindDirectionSensor(coordinator, entry, station_id, station_name),
+        ChmuWeatherDescriptionSensor(coordinator, entry, station_id, station_name),
     ]
 
     async_add_entities(sensors)
@@ -204,3 +205,53 @@ class ChmuWindDirectionSensor(ChmuSensorBase):
             value = self.coordinator.data.get("wind_direction")
             return value if value not in (None, "", []) else None
         return None
+
+
+class ChmuWeatherDescriptionSensor(ChmuSensorBase):
+    """Weather description sensor from CHMI text forecast."""
+
+    _MAX_STATE_LENGTH = 255
+    _attr_translation_key = "weather_description"
+    _attr_icon = "mdi:text-box-outline"
+
+    @property
+    def unique_id(self):
+        """Return unique ID."""
+        return f"{self._station_id}_weather_description"
+
+    @property
+    def native_value(self):
+        """Return the state."""
+        value = self._description_value()
+        if value is None:
+            return None
+        if len(value) <= self._MAX_STATE_LENGTH:
+            return value
+        return f"{value[: self._MAX_STATE_LENGTH - 3]}..."
+
+    @property
+    def extra_state_attributes(self):
+        """Return extra state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        attrs = {}
+        description = self._description_value()
+        if description and len(description) > self._MAX_STATE_LENGTH:
+            attrs["full_text"] = description
+
+        updated_at = self.coordinator.data.get("weather_description_timestamp")
+        if updated_at:
+            attrs["forecast_updated_at"] = updated_at
+
+        return attrs or None
+
+    def _description_value(self):
+        """Return normalized description text or None."""
+        if not self.coordinator.data:
+            return None
+        value = self.coordinator.data.get("weather_description")
+        if not isinstance(value, str):
+            return None
+        value = value.strip()
+        return value or None

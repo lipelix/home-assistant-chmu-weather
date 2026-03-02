@@ -39,6 +39,9 @@
       },
       "wind_direction": {
         "name": "Směr větru"
+      },
+      "weather_description": {
+        "name": "Textový popis počasí"
       }
     }
   }

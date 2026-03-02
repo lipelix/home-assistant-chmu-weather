@@ -178,3 +178,56 @@ def test_get_stations_retries_previous_day(mock_session):
     yesterday_url = mock_session.get.call_args_list[1].args[0]
     assert today_url.endswith("meta1-20251221.json")
     assert yesterday_url.endswith("meta1-20251220.json")
+
+
+def test_parse_latest_cr_text_filename_uses_modified_timestamp():
+    """Newest forecast file should be selected by modified time."""
+    client = api.ChmuApi("11518")
+    index_html = """
+    <a href="web_pCRntx_282100.json">web_pCRntx_282100.json</a> 28-Feb-2026 20:52
+    <a href="web_pCRntx_010315.json">web_pCRntx_010315.json</a> 01-Mar-2026 03:23
+    """
+
+    filename = client._parse_latest_cr_text_filename(index_html)
+
+    assert filename == "web_pCRntx_010315.json"
+
+
+def test_get_current_data_adds_weather_description(monkeypatch):
+    """Text weather description is merged into current sensor payload."""
+    client = api.ChmuApi("11518")
+
+    monkeypatch.setattr(
+        client,
+        "_fetch_10min_data",
+        MagicMock(return_value={"temperature": 12, "station_name": "Praha"}),
+    )
+    monkeypatch.setattr(
+        client,
+        "_fetch_latest_cr_text_forecast",
+        MagicMock(
+            return_value={
+                "datumVytvoreni": "2026-03-02T03:19:33.067Z",
+                "data": {
+                    "features": [
+                        {
+                            "properties": {
+                                "data": [
+                                    {
+                                        "name": "textWeather",
+                                        "displayText": "  Jasno\xa0až polojasno.  ",
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+            }
+        ),
+    )
+
+    data = client.get_current_data()
+
+    assert data["temperature"] == 12
+    assert data["weather_description"] == "Jasno až polojasno."
+    assert data["weather_description_timestamp"] == "2026-03-02T03:19:33.067Z"
