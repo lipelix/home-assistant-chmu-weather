@@ -5,7 +5,7 @@ Custom Home Assistant integration for Czech Hydrometeorological Institute (ČHM�
 ## Features
 
 - 🌡️ **Real-time weather data** from ČHMÚ meteorological stations
-- 📊 **Multiple sensors**: Temperature, Humidity, Pressure, Precipitation, Wind Speed, Wind Direction
+- 📊 **Multiple sensors**: Temperature, Humidity, Pressure, Precipitation, Wind Speed, Wind Direction, Weather Description
 - 📈 **Historical data support** via Home Assistant's built-in history tracking
 - 🗺️ **41+ stations** across Czech Republic
 - 🎯 **Smart station selection** - automatically suggests nearest station based on your Home location
@@ -74,6 +74,7 @@ Each station provides the following sensors:
 | Precipitation | mm | precipitation |
 | Wind Speed | m/s | wind_speed |
 | Wind Direction | ° | - |
+| Weather Description | text | - |
 
 ## Dashboard Configuration
 
@@ -116,8 +117,9 @@ title: ČHMÚ - Venkovní počasí
 
 Data is fetched from ČHMÚ's Open Data portal:
 - **API**: https://opendata.chmi.cz/meteorology/climate/
+- **Forecast text API**: https://opendata.chmi.cz/meteorology/weather/forecast/now/
 - **Update interval**: 10 minutes
-- **Data type**: Real measured values (not forecasts)
+- **Data type**: Real measured values + text forecast description
 
 ## Troubleshooting
 

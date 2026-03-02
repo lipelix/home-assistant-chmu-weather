@@ -1,14 +1,18 @@
 """API client for ČHMÚ Weather."""
 
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import requests
 
-from .const import API_BASE_URL, API_METADATA_PATH, API_NOW_PATH
+from .const import API_BASE_URL, API_FORECAST_NOW_URL, API_METADATA_PATH, API_NOW_PATH
 
 _LOGGER = logging.getLogger(__name__)
+_CR_TEXT_FORECAST_RE = re.compile(
+    r'href="(web_pCRntx_\d{6}\.json)"[^<]*</a>\s+(\d{2}-[A-Za-z]{3}-\d{4}\s+\d{2}:\d{2})'
+)
 
 
 def _fetch_metadata_with_fallback(
@@ -171,6 +175,24 @@ class ChmuApi:
         data = self._fetch_10min_data(now)
         if not data:
             raise ValueError(f"No data available for station {self.station_id}")
+
+        # Text forecast is optional; measured station data should still work
+        # even when forecast endpoint is unavailable.
+        try:
+            forecast = self._fetch_latest_cr_text_forecast()
+            description = self._extract_weather_description(forecast)
+            if description:
+                data["weather_description"] = description
+
+            created_at = forecast.get("datumVytvoreni")
+            if created_at:
+                data["weather_description_timestamp"] = created_at
+        except Exception:
+            _LOGGER.debug(
+                "Could not fetch text weather description from forecast endpoint",
+                exc_info=True,
+            )
+
         return data
 
     def _fetch_10min_data(self, date: datetime) -> Optional[Dict[str, Any]]:
@@ -252,3 +274,59 @@ class ChmuApi:
 
         _LOGGER.debug(f"Parsed data: {result}")
         return result
+
+    def _fetch_latest_cr_text_forecast(self) -> Dict[str, Any]:
+        """Fetch latest Czech Republic text forecast JSON."""
+        index_url = f"{API_FORECAST_NOW_URL}/"
+        index_response = self.session.get(index_url, timeout=30)
+        index_response.raise_for_status()
+
+        latest_filename = self._parse_latest_cr_text_filename(index_response.text)
+        if not latest_filename:
+            raise ValueError("No web_pCRntx forecast file found in index")
+
+        forecast_url = f"{API_FORECAST_NOW_URL}/{latest_filename}"
+        _LOGGER.debug("Fetching forecast text data from: %s", forecast_url)
+
+        forecast_response = self.session.get(forecast_url, timeout=30)
+        forecast_response.raise_for_status()
+        return forecast_response.json()
+
+    def _parse_latest_cr_text_filename(self, index_html: str) -> Optional[str]:
+        """Parse index HTML and return the latest web_pCRntx file."""
+        candidates: list[tuple[datetime, str]] = []
+
+        for filename, modified in _CR_TEXT_FORECAST_RE.findall(index_html):
+            try:
+                modified_time = datetime.strptime(modified, "%d-%b-%Y %H:%M")
+            except ValueError:
+                continue
+            candidates.append((modified_time, filename))
+
+        if not candidates:
+            return None
+
+        return max(candidates, key=lambda item: item[0])[1]
+
+    def _extract_weather_description(
+        self, forecast_json: Dict[str, Any]
+    ) -> Optional[str]:
+        """Extract weather description from forecast JSON."""
+        features = forecast_json.get("data", {}).get("features", [])
+        if not isinstance(features, list):
+            return None
+
+        for feature in features:
+            properties = feature.get("properties", {})
+            entries = properties.get("data", [])
+            if not isinstance(entries, list):
+                continue
+
+            for entry in entries:
+                if entry.get("name") != "textWeather":
+                    continue
+                display_text = entry.get("displayText")
+                if isinstance(display_text, str) and display_text.strip():
+                    return " ".join(display_text.replace("\xa0", " ").split())
+
+        return None

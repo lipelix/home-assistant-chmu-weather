@@ -19,5 +19,12 @@
     "abort": {
       "already_configured": "This station is already configured"
     }
+  },
+  "entity": {
+    "sensor": {
+      "weather_description": {
+        "name": "Weather Description"
+      }
+    }
   }
 }
