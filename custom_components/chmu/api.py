@@ -3,7 +3,7 @@
 import logging
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -17,7 +17,7 @@ _CR_TEXT_FORECAST_RE = re.compile(
 
 def _fetch_metadata_with_fallback(
     session: requests.Session, log_context: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Fetch today's metadata or fall back to previous day when necessary."""
     date_str = datetime.now().strftime("%Y%m%d")
     filename = f"meta1-{date_str}.json"
@@ -46,7 +46,7 @@ def _fetch_metadata_with_fallback(
         raise
 
 
-def get_stations() -> Dict[str, str]:
+def get_stations() -> dict[str, str]:
     """Fetch available stations from ČHMÚ metadata."""
     session = requests.Session()
     session.headers.update({"User-Agent": "Home-Assistant-CHMU-Integration/1.0"})
@@ -87,7 +87,7 @@ def get_stations() -> Dict[str, str]:
         }
 
 
-def get_stations_with_coords() -> Dict[str, Dict[str, Any]]:
+def get_stations_with_coords() -> dict[str, dict[str, Any]]:
     """Fetch available stations with coordinates from ČHMÚ metadata.
 
     Returns:
@@ -159,7 +159,7 @@ def get_stations_with_coords() -> Dict[str, Dict[str, Any]]:
 class ChmuApi:
     """API client for ČHMÚ weather data."""
 
-    def __init__(self, station_id: str, station_name: Optional[str] = None):
+    def __init__(self, station_id: str, station_name: str | None = None):
         """Initialize the API client."""
         self.station_id = station_id
         self.station_name = station_name or f"Station {station_id}"
@@ -168,7 +168,7 @@ class ChmuApi:
             {"User-Agent": "Home-Assistant-CHMU-Integration/1.0"}
         )
 
-    def get_current_data(self) -> Dict[str, Any]:
+    def get_current_data(self) -> dict[str, Any]:
         """Get current weather data from ČHMÚ."""
         now = datetime.now()
 
@@ -195,7 +195,7 @@ class ChmuApi:
 
         return data
 
-    def _fetch_10min_data(self, date: datetime) -> Optional[Dict[str, Any]]:
+    def _fetch_10min_data(self, date: datetime) -> dict[str, Any] | None:
         """Fetch 10-minute interval data for a specific date."""
         # Format: 10m-0-20000-0-{station_id}-{YYYYMMDD}.json
         date_str = date.strftime("%Y%m%d")
@@ -216,7 +216,7 @@ class ChmuApi:
                 return None
             raise
 
-    def _parse_chmu_data(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_chmu_data(self, json_data: dict[str, Any]) -> dict[str, Any]:
         """Parse CHMU JSON data format.
 
         Data format:
@@ -275,7 +275,7 @@ class ChmuApi:
         _LOGGER.debug(f"Parsed data: {result}")
         return result
 
-    def _fetch_latest_cr_text_forecast(self) -> Dict[str, Any]:
+    def _fetch_latest_cr_text_forecast(self) -> dict[str, Any]:
         """Fetch latest Czech Republic text forecast JSON."""
         index_url = f"{API_FORECAST_NOW_URL}/"
         index_response = self.session.get(index_url, timeout=30)
@@ -292,7 +292,7 @@ class ChmuApi:
         forecast_response.raise_for_status()
         return forecast_response.json()
 
-    def _parse_latest_cr_text_filename(self, index_html: str) -> Optional[str]:
+    def _parse_latest_cr_text_filename(self, index_html: str) -> str | None:
         """Parse index HTML and return the latest web_pCRntx file."""
         candidates: list[tuple[datetime, str]] = []
 
@@ -308,9 +308,7 @@ class ChmuApi:
 
         return max(candidates, key=lambda item: item[0])[1]
 
-    def _extract_weather_description(
-        self, forecast_json: Dict[str, Any]
-    ) -> Optional[str]:
+    def _extract_weather_description(self, forecast_json: dict[str, Any]) -> str | None:
         """Extract weather description from forecast JSON."""
         features = forecast_json.get("data", {}).get("features", [])
         if not isinstance(features, list):

@@ -11,21 +11,25 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install ruff
-        run: python -m pip install ruff
+        # Pinned via requirements-dev.txt - an unpinned ruff picks up new
+        # default rules on every release and breaks CI without a code change.
+        run: python -m pip install "$(grep '^ruff==' requirements-dev.txt)"
       - name: Run ruff
         run: ruff check .
+      - name: Check formatting
+        run: ruff format --check .
 
   hassfest:
     name: Hassfest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Hassfest validation
         uses: home-assistant/actions/hassfest@master
 
@@ -33,7 +37,7 @@ jobs:
     name: HACS Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: HACS Action
         uses: hacs/action@main
         with:

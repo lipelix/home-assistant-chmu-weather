@@ -1,10 +1,9 @@
 """Config flow for ČHMÚ Weather integration."""
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
@@ -20,7 +19,7 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
     Returns distance in kilometers.
     """
-    from math import radians, sin, cos, sqrt, atan2
+    from math import atan2, cos, radians, sin, sqrt
 
     # Earth radius in kilometers
     R = 6371.0
@@ -41,8 +40,8 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 
 def find_nearest_station(
-    home_lat: float, home_lon: float, stations: Dict[str, Dict[str, Any]]
-) -> Optional[str]:
+    home_lat: float, home_lon: float, stations: dict[str, dict[str, Any]]
+) -> str | None:
     """Find the nearest station to home coordinates.
 
     Returns station ID of the nearest station.
@@ -72,7 +71,7 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(
-        self, user_input: Optional[Dict[str, Any]] = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
         errors = {}

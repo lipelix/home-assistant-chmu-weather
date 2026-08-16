@@ -1,5 +1,7 @@
 # Development dependencies
-ruff>=0.6.0
+# ruff is pinned exactly: its default rule set changes between minor releases
+# (0.16.0 broke CI), so CI, pre-commit and local runs must use the same version.
+ruff==0.16.3
 pre-commit>=3.5.0
 pytest>=8.3.0
 requests>=2.31.0
