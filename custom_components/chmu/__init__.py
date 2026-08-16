@@ -11,8 +11,8 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .const import DOMAIN
 from .api import ChmuApi
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 

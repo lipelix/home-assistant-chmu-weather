@@ -1,0 +1,23 @@
+# Ruff configuration.
+#
+# The rule set is selected explicitly on purpose: ruff changed its *default*
+# selection in 0.16.0, which silently broke CI on repos that relied on the
+# implicit defaults. Pin both the ruff version (requirements-dev.txt,
+# .pre-commit-config.yaml, .github/workflows/ci.yml) and the rules here.
+
+target-version = "py311"
+line-length = 88
+
+exclude = [".venv", "assets"]
+
+[lint]
+select = [
+    "E4",   # pycodestyle - imports
+    "E7",   # pycodestyle - statements
+    "E9",   # pycodestyle - runtime errors
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+]

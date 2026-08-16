@@ -1,11 +1,11 @@
 """Tests for CHMU API helpers."""
 
+import sys
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock
-import sys
 
 import pytest
 import requests
