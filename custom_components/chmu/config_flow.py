@@ -9,7 +9,12 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
 from .api import get_stations_with_coords
-from .const import CONF_STATION_ID, CONF_STATION_NAME, DOMAIN
+from .const import (
+    CONF_STATION_ELEMENTS,
+    CONF_STATION_ID,
+    CONF_STATION_NAME,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,15 +49,25 @@ def find_nearest_station(
 ) -> str | None:
     """Find the nearest station to home coordinates.
 
+    Most automatic stations are rain gauges reporting precipitation only, so a
+    station measuring temperature is preferred as the pre-selected default and
+    the raw nearest station is only used when no such station exists.
+
     Returns station ID of the nearest station.
     """
     if not stations:
         return None
 
+    with_temperature = {
+        station_id: info
+        for station_id, info in stations.items()
+        if "temperature" in info.get("elements", ["temperature"])
+    }
+
     nearest_id = None
     nearest_distance = float("inf")
 
-    for station_id, info in stations.items():
+    for station_id, info in (with_temperature or stations).items():
         distance = calculate_distance(
             home_lat, home_lon, info["latitude"], info["longitude"]
         )
@@ -63,6 +78,25 @@ def find_nearest_station(
     _LOGGER.debug(f"Nearest station: {nearest_id} at {nearest_distance:.1f} km")
 
     return nearest_id
+
+
+def build_station_labels(stations: dict[str, dict[str, Any]]) -> dict[str, str]:
+    """Build dropdown labels, disambiguating stations that share a name.
+
+    ČHMÚ reuses the same place name for several nearby stations (e.g. two
+    "Praha, Klementinum" sites), so duplicates get their station id appended.
+    """
+    name_counts: dict[str, int] = {}
+    for info in stations.values():
+        name_counts[info["name"]] = name_counts.get(info["name"], 0) + 1
+
+    labels = {}
+    for station_id, info in stations.items():
+        name = info["name"]
+        labels[station_id] = (
+            name if name_counts[name] == 1 else f"{name} ({station_id})"
+        )
+    return labels
 
 
 class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -85,6 +119,7 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
             station_info = stations_with_coords.get(station_id, {})
             station_name = station_info.get("name", f"Station {station_id}")
+            station_elements = station_info.get("elements", [])
 
             # Check if already configured
             await self.async_set_unique_id(station_id)
@@ -95,6 +130,7 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_STATION_ID: station_id,
                     CONF_STATION_NAME: station_name,
+                    CONF_STATION_ELEMENTS: station_elements,
                 },
             )
 
@@ -124,10 +160,11 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         select_options = [
             selector.SelectOptionDict(
                 value=station_id,
-                label=info["name"],
+                label=label,
             )
-            for station_id, info in sorted(
-                stations_with_coords.items(), key=lambda x: x[1]["name"]
+            for station_id, label in sorted(
+                build_station_labels(stations_with_coords).items(),
+                key=lambda x: x[1],
             )
         ]
 

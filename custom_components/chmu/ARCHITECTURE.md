@@ -75,19 +75,32 @@
 
 ## Available Weather Stations
 
-| Station ID | Location | Region |
-|------------|----------|--------|
-| 11406 | Praha-Libuš | Praha |
-| 11518 | Praha-Ruzyně | Praha |
-| 11782 | Brno-Tuřany | Jihomoravský |
-| 11963 | Ostrava-Mošnov | Moravskoslezský |
-| 11603 | Plzeň-Mikulka | Plzeňský |
-| 11746 | Pardubice | Pardubický |
-| 11723 | Ústí nad Labem | Ústecký |
-| 11465 | Liberec | Liberecký |
-| 11636 | České Budějovice | Jihočeský |
-| 11698 | Hradec Králové | Královéhradecký |
-| 11647 | Karlovy Vary | Karlovarský |
+The station list is discovered at runtime from the ČHMÚ metadata, so no station
+table is hardcoded in the integration. Two families of stations are offered:
+
+| WSI prefix | Type | Count (2026-09) |
+|------------|------|-----------------|
+| `0-20000-0-` | Professional WMO stations (Praha-Ruzyně, Brno-Tuřany, …) | 40 |
+| `0-203-0-` | Automatic / climatological stations | 434 |
+
+**Station id stored in the config entry**
+
+- Professional stations keep the bare WMO id (`11518`) so that config entries
+  created before automatic stations were supported keep working unchanged.
+- All other stations store the full WSI (`0-203-0-10102001101`).
+
+`api.station_id_to_wsi()` / `api.wsi_to_station_id()` convert between the two.
+
+**Metadata files**
+
+| File | Content | Used for |
+|------|---------|----------|
+| `meta1-YYYYMMDD.json` | `WSI, GH_ID, FULL_NAME, GEOGR1, GEOGR2, ELEVATION, BEGIN_DATE` | Names + coordinates (nearest-station suggestion) |
+| `meta2-YYYYMMDD.json` | `OBS_TYPE, WSI, EG_EL_ABBREVIATION, NAME, UN_DESCRIPTION, HEIGHT, SCHEDULE` | Which elements a station publishes on the 10M schedule |
+
+Only stations with at least one `10M` element the integration maps to a sensor
+are offered, and only the matching sensors are created — many automatic
+stations report precipitation only.
 
 ## Sensor Specifications
 

@@ -19,7 +19,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_STATION_ID, CONF_STATION_NAME, DOMAIN
+from .const import (
+    CONF_STATION_ELEMENTS,
+    CONF_STATION_ID,
+    CONF_STATION_NAME,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,15 +39,23 @@ async def async_setup_entry(
     station_id = entry.data[CONF_STATION_ID]
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
 
+    # Automatic stations measure only a subset of elements (many report
+    # precipitation only). Entries created before this was tracked have no
+    # element list, so fall back to creating every sensor.
+    supported = entry.data.get(CONF_STATION_ELEMENTS)
+    if not supported:
+        supported = list(SENSOR_TYPES)
+
     sensors = [
-        ChmuTemperatureSensor(coordinator, entry, station_id, station_name),
-        ChmuHumiditySensor(coordinator, entry, station_id, station_name),
-        ChmuPressureSensor(coordinator, entry, station_id, station_name),
-        ChmuPrecipitationSensor(coordinator, entry, station_id, station_name),
-        ChmuWindSpeedSensor(coordinator, entry, station_id, station_name),
-        ChmuWindDirectionSensor(coordinator, entry, station_id, station_name),
-        ChmuWeatherDescriptionSensor(coordinator, entry, station_id, station_name),
+        sensor_class(coordinator, entry, station_id, station_name)
+        for key, sensor_class in SENSOR_TYPES.items()
+        if key in supported
     ]
+
+    # The text forecast is issued for the whole country, not per station.
+    sensors.append(
+        ChmuWeatherDescriptionSensor(coordinator, entry, station_id, station_name)
+    )
 
     async_add_entities(sensors)
 
@@ -255,3 +268,13 @@ class ChmuWeatherDescriptionSensor(ChmuSensorBase):
             return None
         value = value.strip()
         return value or None
+
+
+SENSOR_TYPES = {
+    "temperature": ChmuTemperatureSensor,
+    "humidity": ChmuHumiditySensor,
+    "pressure": ChmuPressureSensor,
+    "precipitation": ChmuPrecipitationSensor,
+    "wind_speed": ChmuWindSpeedSensor,
+    "wind_direction": ChmuWindDirectionSensor,
+}

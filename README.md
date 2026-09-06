@@ -43,8 +43,13 @@ The integration is configured via the UI (Config Flow). No YAML configuration is
 
 ## Features
 
-- Fetches weather data from ČHMÚ stations
-- Provides temperature, humidity, and other meteorological data
+- Fetches weather data from all ČHMÚ stations publishing 10-minute data —
+  the 40 professional WMO stations plus ~430 automatic stations
+- Provides temperature, humidity, pressure, precipitation, wind speed and
+  wind direction, plus the ČHMÚ text forecast for the Czech Republic
+- Creates only the sensors a station actually measures (many automatic
+  stations report precipitation only)
+- Pre-selects the station nearest to your Home Assistant location
 - Easy configuration through the Home Assistant UI
 
 ## Development

@@ -8,7 +8,7 @@
           "station_id": "Meterologická stanice"
         },
         "data_description": {
-          "station_id": "Nejbližší stanice je předvybrána podle vaší domácí polohy. V případě potřeby můžete vybrat jinou stanici."
+          "station_id": "Nejbližší stanice měřící teplotu je předvybrána podle vaší domácí polohy. Řada automatických stanic měří pouze srážky a nabídne jen tento senzor."
         }
       }
     },
