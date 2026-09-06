@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-09-06
+
+### Added
+- Support for ČHMÚ automatic stations (`0-203-0-...`), expanding the station
+  list from 40 to ~474 stations (#6)
+- Station element metadata (`meta2`) is used to offer only stations that
+  publish usable 10-minute data
+
+### Changed
+- Sensors are created only for elements a station actually measures; existing
+  config entries keep all sensors
+- Stations sharing a name are disambiguated by station id in the picker
+- Measurements a station does not report are omitted instead of reported as
+  `None`/`0`
+
 ## [1.3.0] - 2026-03-05
 
 ### Added
