@@ -20,9 +20,19 @@ API_FORECAST_NOW_URL = "https://opendata.chmi.cz/meteorology/weather/forecast/no
 FORECAST_BASE_URL = "https://lipelix.github.io/home-assistant-chmu-weather/v1"
 FORECAST_SCHEMA_VERSION = 1
 
-# ALADIN runs every 6 hours. Well past that means the publishing job stopped;
-# scheduled GitHub workflows are disabled after 60 days of repository silence.
-FORECAST_STALE_AFTER = timedelta(hours=12)
+# The two thresholds measure different things on purpose.
+#
+# STALE is about the publishing job and is measured from when the data was
+# published, not from the model reference time. The job runs every 6 hours, but
+# GitHub delays scheduled workflows - drifts of about 4 hours have been
+# observed - and the builder deliberately falls back to the previous model run
+# when the newest one is incomplete. Measuring from the run time therefore
+# warns about a job that is working fine. 18 hours is three missed slots even
+# allowing for that drift.
+#
+# UNUSABLE is about the content and stays keyed on the model run: a forecast
+# from a 48 hour old run has lost its value however recently it was published.
+FORECAST_STALE_AFTER = timedelta(hours=18)
 FORECAST_UNUSABLE_AFTER = timedelta(hours=48)
 
 # Station metadata files (meta1 = stations, meta2 = measured elements per station)
