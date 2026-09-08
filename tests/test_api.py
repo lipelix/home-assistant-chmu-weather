@@ -1,70 +1,13 @@
 """Tests for CHMU API helpers."""
 
-import sys
 from datetime import datetime
 from importlib import import_module
-from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 import requests
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-
-# Stub classes for Home Assistant imports
-class _ConfigEntry:
-    """Stub for ConfigEntry."""
-
-
-class _Platform:
-    """Stub for Platform."""
-
-    SENSOR = "sensor"
-
-
-class _HomeAssistant:
-    """Stub for HomeAssistant."""
-
-
-class _DataUpdateCoordinator:
-    """Stub for DataUpdateCoordinator."""
-
-
-class _UpdateFailed(Exception):
-    """Stub for UpdateFailed."""
-
-
-def _ensure_homeassistant_stub() -> None:
-    """Stub Home Assistant modules to allow importing integration code."""
-    if "homeassistant" in sys.modules:
-        return
-
-    # Create module hierarchy
-    for module_path, attrs in [
-        ("homeassistant", {}),
-        ("homeassistant.config_entries", {"ConfigEntry": _ConfigEntry}),
-        ("homeassistant.const", {"Platform": _Platform}),
-        ("homeassistant.core", {"HomeAssistant": _HomeAssistant}),
-        ("homeassistant.helpers", {}),
-        (
-            "homeassistant.helpers.update_coordinator",
-            {
-                "DataUpdateCoordinator": _DataUpdateCoordinator,
-                "UpdateFailed": _UpdateFailed,
-            },
-        ),
-    ]:
-        mod = ModuleType(module_path)
-        for name, value in attrs.items():
-            setattr(mod, name, value)
-        sys.modules[module_path] = mod
-
-
-_ensure_homeassistant_stub()
 api = import_module("custom_components.chmu.api")
 
 

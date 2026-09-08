@@ -25,6 +25,22 @@ jobs:
       - name: Check formatting
         run: ruff format --check .
 
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        # Home Assistant 2026.2 requires 3.13; the lint job stays on the
+        # oldest version the integration itself supports.
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run pytest
+        run: pytest
+
   hassfest:
     name: Hassfest
     runs-on: ubuntu-latest

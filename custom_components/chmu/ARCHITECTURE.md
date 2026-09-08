@@ -113,6 +113,47 @@ stations report precipitation only.
 | Wind Speed | wind_speed | m/s | measurement |
 | Wind Direction | - | ° | measurement |
 
+## Forecast Pipeline
+
+ČHMÚ publishes no per-point forecast API. The options it does offer are a
+national text forecast for 14 regions and the raw ALADIN model output as GRIB1,
+about 70 MB per run — far too much to download inside Home Assistant, and the
+national text is up to 10 °C off for mountain stations.
+
+The forecast therefore comes from a build step in this repository:
+
+```
+opendata.chmi.cz                 GitHub Actions                  Home Assistant
+ALADIN CZ_1km  ──70 MB GRIB1──▶  tools/aladin.py       ┐
+(501 x 290 grid,                 samples 758 station   │  9.6 MB
+ ~1 km, 00/06/12/18 UTC)         points, stdlib only   ├──▶ GitHub Pages
+                                 tools/build_forecast_ │      v1/<wsi>.json
+                                 data.py               ┘      ~1.5 kB gzip ──▶ forecast.py
+```
+
+- `tools/aladin.py` decodes GRIB1 with the standard library only. The CZ_1km
+  product is a regular latitude/longitude grid with simple packing and no
+  bitmap, so reading one grid point is bit arithmetic: no eccodes, no numpy.
+- `.github/workflows/forecast-data.yml` runs four times a day and deploys the
+  result to GitHub Pages. No accounts, no analytics, no personal data.
+- `custom_components/chmu/forecast.py` downloads only its own station's file and
+  revalidates with `If-None-Match`, so an unchanged forecast costs a 304 with no
+  body. It is free of Home Assistant imports so the mapping and the day/night
+  maths are unit-testable.
+- `custom_components/chmu/weather.py` is the entity: measured values for the
+  current conditions, the model for the forecast.
+
+Two coordinators run per config entry. A forecast failure is logged and leaves
+the measured sensors untouched; a run older than 12 hours warns, and one older
+than 48 hours is refused, which is how a stopped publishing job becomes visible
+instead of silently serving a week old forecast.
+
+Values are published in the model's own units and mapped to Home Assistant
+conditions in the integration, so the mapping can change without regenerating
+the data. ALADIN does emit a precipitation type field, but ČHMÚ documents no
+code table for it, so it is used only as a wetness hint and rain versus snow is
+decided by temperature.
+
 ## API Details
 
 **Base URL:** `https://opendata.chmi.cz/meteorology/climate`
