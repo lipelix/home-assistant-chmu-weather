@@ -1,10 +1,20 @@
 name: CI
 
+# A push to a branch that has an open pull request used to run this workflow
+# twice, once per event. Pushes are therefore limited to main, which is the
+# only branch where a push is not already covered by the pull_request event.
 on:
   push:
+    branches:
+      - main
   pull_request:
   schedule:
     - cron: "0 0 * * *"
+
+# Superseding a pull request with a new push makes the older run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
