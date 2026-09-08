@@ -7,7 +7,6 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfPrecipitationDepth,
@@ -19,6 +18,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import ChmuConfigEntry
 from .const import (
     CONF_STATION_ELEMENTS,
     CONF_STATION_ID,
@@ -31,11 +31,11 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: ChmuConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up ČHMÚ sensors from a config entry."""
-    coordinator = hass.data[DOMAIN][entry.entry_id].coordinator
+    coordinator = entry.runtime_data.coordinator
     station_id = entry.data[CONF_STATION_ID]
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
 

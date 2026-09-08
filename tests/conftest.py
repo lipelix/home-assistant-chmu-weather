@@ -6,6 +6,7 @@ test module used to build its own stub, which made the result depend on
 collection order.
 """
 
+import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -17,6 +18,10 @@ if str(ROOT) not in sys.path:
 
 class _ConfigEntry:
     """Stub for ConfigEntry."""
+
+    def __class_getitem__(cls, item):
+        """Accept the ConfigEntry[RuntimeData] annotation form."""
+        return cls
 
 
 class _Platform:
@@ -43,8 +48,13 @@ class _UpdateFailed(Exception):
 
 
 def _install_homeassistant_stub() -> None:
-    """Register stub Home Assistant modules, unless the real ones are present."""
-    if "homeassistant" in sys.modules:
+    """Register stub Home Assistant modules, unless the real ones are present.
+
+    Checked with find_spec rather than sys.modules: the real package is only in
+    sys.modules once something has imported it, so a stub installed here would
+    win purely by running first.
+    """
+    if importlib.util.find_spec("homeassistant") is not None:
         return
 
     for module_path, attrs in [

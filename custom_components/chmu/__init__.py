@@ -13,7 +13,6 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api import ChmuApi
-from .const import DOMAIN
 from .forecast import ChmuForecastApi, ForecastUnusable, StationForecast
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +34,12 @@ class ChmuRuntimeData:
     forecast_coordinator: DataUpdateCoordinator[StationForecast | None]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+# Config entry carrying the runtime data above, so the platforms get the
+# coordinators typed instead of looking them up in hass.data.
+ChmuConfigEntry = ConfigEntry[ChmuRuntimeData]
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool:
     """Set up ČHMÚ Weather from a config entry."""
     station_id = entry.data["station_id"]
     station_name = entry.data.get("station_name", f"Station {station_id}")
@@ -91,12 +95,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     await coordinator.async_config_entry_first_refresh()
-    await forecast_coordinator.async_refresh()
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = ChmuRuntimeData(
+    entry.runtime_data = ChmuRuntimeData(
         coordinator=coordinator,
         forecast_coordinator=forecast_coordinator,
+    )
+
+    # The forecast is fetched from a static site over the public internet and
+    # is not needed for the entity to exist, so the first download runs in the
+    # background: a slow or unreachable CDN must not hold up startup. Tied to
+    # the entry so unloading cancels it.
+    entry.async_create_background_task(
+        hass,
+        forecast_coordinator.async_refresh(),
+        name=f"chmu initial forecast {station_id}",
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -104,11 +116,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

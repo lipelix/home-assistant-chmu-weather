@@ -68,10 +68,13 @@ coordinates and publishes about 1.5 kB per station as a static site. Your Home
 Assistant fetches only its own station's file, and revalidates with an ETag so
 an unchanged forecast transfers no body at all.
 
-Nothing about that request is logged, counted or analysed: no accounts, no
-analytics, no personal data. If the job ever stops, the integration warns after
-12 hours and stops serving the forecast after 48 rather than quietly showing a
-week old one. The measured sensors keep working either way.
+The request carries no account, no token and no identifier beyond a
+User-Agent. GitHub Pages logs it the way any web server logs a request; this
+project adds nothing on top - no analytics, no counters, no personal data, and
+no server of its own to collect them on. If the job ever stops, the integration
+warns once the data it is serving is 18 hours old and refuses a model run older
+than 48 hours rather than quietly showing a week old one. The measured sensors
+keep working either way.
 
 See [`custom_components/chmu/ARCHITECTURE.md`](custom_components/chmu/ARCHITECTURE.md)
 for the pipeline in detail.

@@ -110,10 +110,11 @@ show_current: true
 model run, neither of which an integration can download on every update. A
 GitHub Actions job in this repository samples the GRIB at every station and
 publishes a few kilobytes per station as a static site, which is what the
-integration fetches. Nothing about the request is recorded: no accounts, no
-analytics, no personal data. If that job ever stops, the integration warns after
-12 hours and stops serving the forecast after 48; the measured sensors are
-unaffected.
+integration fetches. The request carries no account, no token and no identifier
+beyond a User-Agent, and nothing is collected on top of GitHub Pages' own web
+server logs: no analytics, no counters, no personal data. If that job ever
+stops, the integration warns once the data it serves is 18 hours old and
+refuses a model run older than 48 hours; the measured sensors are unaffected.
 
 ## Dashboard Configuration
 

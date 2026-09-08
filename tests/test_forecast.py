@@ -7,12 +7,14 @@ is stubbed by tests/conftest.py.
 
 import logging
 from datetime import UTC, datetime, timedelta
+from types import EllipsisType
 from unittest.mock import MagicMock
 
 import pytest
 import requests
 
 from custom_components.chmu import forecast as fc
+from custom_components.chmu.const import USER_AGENT
 
 NOW = datetime(2026, 9, 8, 12, 0, tzinfo=UTC)
 
@@ -51,7 +53,13 @@ def _series(*amounts, first_offset=0, **shared):
     ]
 
 
-def _document(hourly=None, daily=None, run=NOW, schema=1, generated=...):
+def _document(
+    hourly=None,
+    daily=None,
+    run=NOW,
+    schema=1,
+    generated: datetime | EllipsisType = ...,
+):
     return {
         "schema": schema,
         "model": "ALADIN CZ_1km",
@@ -332,6 +340,48 @@ def test_overnight_rain_still_makes_the_day_rainy():
     assert tomorrow["condition"] == "rainy"
 
 
+@pytest.mark.parametrize(
+    ("hourly_amount", "expected"),
+    [(0.03, "cloudy"), (0.05, "rainy")],
+)
+def test_a_days_worth_of_drizzle_needs_a_millimetre_to_count(hourly_amount, expected):
+    # Neither amount reaches the hourly wet threshold, so the day is decided by
+    # the total: 24 x 0.03 mm is model noise, 24 x 0.05 mm is a wet day. The
+    # hourly threshold used to double as the daily one, which made a day of
+    # drizzle too small to notice read as rainy.
+    hourly = _series(*([hourly_amount] * 25), first_offset=10, cloud_coverage=100)
+    daily = [
+        {"date": "2026-09-08", "temperature": 28.8, "templow": 11.5},
+        {"date": "2026-09-09", "temperature": 20.0, "templow": 12.0},
+    ]
+
+    parsed = fc.parse_forecast(_document(hourly=hourly, daily=daily), NOW)
+    tomorrow = parsed.daily[1]
+
+    assert tomorrow["native_precipitation"] == round(24 * hourly_amount, 1)
+    assert tomorrow["condition"] == expected
+
+
+def test_daylight_for_the_daily_cloud_cover_follows_the_sun():
+    # 06:00 local in September is half an hour before sunrise, so an overcast
+    # sky then must not count towards the day's cloud cover. A fixed 06:00-20:00
+    # daylight window counted it and reported this clear day as partlycloudy.
+    hourly = [
+        _hour(16, cloud_coverage=100),  # 04:00 UTC, 06:00 local, sun at -6 deg
+        _hour(22, cloud_coverage=0),  # 10:00 UTC, 12:00 local
+    ]
+    daily = [
+        {"date": "2026-09-08", "temperature": 28.8, "templow": 11.5},
+        {"date": "2026-09-09", "temperature": 20.0, "templow": 12.0},
+    ]
+
+    parsed = fc.parse_forecast(_document(hourly=hourly, daily=daily), NOW)
+    tomorrow = parsed.daily[1]
+
+    assert tomorrow["cloud_coverage"] == 0
+    assert tomorrow["condition"] == "sunny"
+
+
 def test_a_day_without_a_high_is_dropped():
     # The 12 hour extremes mean the last day a run reaches often has only the
     # overnight low. A tile with no temperature renders empty in Home
@@ -512,6 +562,21 @@ def _api(*responses):
     session.headers = {}
     session.get.side_effect = list(responses)
     return fc.ChmuForecastApi("11450", session=session), session
+
+
+def test_an_injected_session_is_left_alone_but_an_owned_one_is_identified():
+    injected = MagicMock()
+    injected.headers = {}
+
+    fc.ChmuForecastApi("11450", session=injected)
+    owned = fc.ChmuForecastApi("11450").session
+
+    # Tests and other callers hand in their own session; reconfiguring it
+    # behind their back is not this client's business.
+    assert injected.headers == {}
+    # A session this client created identifies the integration, using the same
+    # helper as the measurement client so there is one User-Agent to change.
+    assert owned.headers["User-Agent"] == USER_AGENT
 
 
 def test_the_client_asks_for_the_station_it_was_given():

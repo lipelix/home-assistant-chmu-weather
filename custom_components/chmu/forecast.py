@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from .api import station_id_to_wsi
+from .api import new_session, station_id_to_wsi
 from .const import (
     FORECAST_BASE_URL,
     FORECAST_SCHEMA_VERSION,
@@ -53,6 +53,12 @@ CLOUD_BROKEN_BELOW = 75
 PRECIPITATION_WET_FROM = 0.1
 PRECIPITATION_POURING_FROM = 4.0
 
+# Precipitation in mm summed over a whole day. The hourly threshold is too low
+# to reuse here: two dozen hours of ALADIN's constant drizzle add up past
+# 0.1 mm without anybody getting wet, which would report almost every day as
+# rainy. 1 mm over a day is the smallest total worth planning around.
+PRECIPITATION_WET_DAY_FROM = 1.0
+
 # Air temperature in °C at which precipitation turns to sleet and to snow.
 # ALADIN does publish a precipitation type field, but ČHMÚ documents no code
 # table for it, so it is used only as a yes/no wetness hint and the species is
@@ -63,11 +69,6 @@ TEMPERATURE_SLEET_BELOW = 2.0
 
 # Solar elevation in degrees at sunset, including refraction and solar radius.
 SUNSET_ELEVATION = -0.833
-
-# The daily condition is decided from daylight hours only; an overcast night
-# should not make an otherwise sunny day cloudy.
-DAYTIME_START_HOUR = 6
-DAYTIME_END_HOUR = 20
 
 _HOURLY_KEYS = {
     "temperature": "native_temperature",
@@ -238,19 +239,24 @@ def _hourly_entries(
         if valid_time < current_hour:
             continue
 
+        # Kept on the entry so the daily rollup can pick out daylight hours
+        # without recomputing the sun's position for each of them.
+        night = is_night(valid_time, latitude, longitude)
+
         precipitation, precipitation_type = precipitation_by_time.get(
             valid_time + timedelta(hours=1), (None, None)
         )
 
         entry: dict[str, Any] = {
             "_valid_time": valid_time,
+            "_night": night,
             "datetime": valid_time.isoformat(),
             "condition": condition(
                 cloud_coverage=row.get("cloud_coverage"),
                 precipitation=precipitation,
                 precipitation_type=precipitation_type,
                 temperature=row.get("temperature"),
-                night=is_night(valid_time, latitude, longitude),
+                night=night,
             ),
         }
         for source_key, target_key in _HOURLY_KEYS.items():
@@ -321,13 +327,11 @@ def _daily_entries(
         if humidity is not None:
             entry["humidity"] = humidity
 
-        daytime = [
-            hour
-            for hour in hours
-            if DAYTIME_START_HOUR
-            <= hour["_valid_time"].astimezone(LOCAL_TIMEZONE).hour
-            < DAYTIME_END_HOUR
-        ]
+        # Daylight is taken from the sun's actual position rather than from
+        # fixed clock hours: at this latitude the day runs from 04:00 to 21:00
+        # in June and from 08:00 to 16:00 in December, and any fixed window
+        # would mix night hours into one of the two.
+        daytime = [hour for hour in hours if not hour["_night"]]
         cloud = _mean(
             [h["cloud_coverage"] for h in daytime or hours if "cloud_coverage" in h]
         )
@@ -356,7 +360,7 @@ def _daily_condition(
 
     if wettest is not None and (
         wettest["native_precipitation"] >= PRECIPITATION_WET_FROM
-        or total >= PRECIPITATION_WET_FROM
+        or total >= PRECIPITATION_WET_DAY_FROM
     ):
         return condition(
             cloud_coverage=cloud,
@@ -407,10 +411,9 @@ class ChmuForecastApi:
         self.station_id = station_id
         self.wsi = station_id_to_wsi(station_id)
         self.url = f"{FORECAST_BASE_URL}/{self.wsi}.json"
-        self.session = session or requests.Session()
-        self.session.headers.update(
-            {"User-Agent": "Home-Assistant-CHMU-Integration/1.0"}
-        )
+        # A caller-supplied session is used as it is; only sessions owned by
+        # this client get the integration User-Agent attached.
+        self.session = session if session is not None else new_session()
         self._etag: str | None = None
         self._document: dict[str, Any] | None = None
 
