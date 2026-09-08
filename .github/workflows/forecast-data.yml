@@ -17,16 +17,23 @@ permissions:
   pages: write
   id-token: write
 
-# A late run must not overwrite a newer one, and a stuck run must not block the
-# next model cycle.
+# Serialise the runs so a late one cannot overwrite a newer one. Cancelling is
+# deliberately off: a run interrupted between the artifact upload and the Pages
+# deployment fails the deployment and can leave the site on the older artifact,
+# which is worse than one wasted six minute run. A stuck run is bounded by the
+# job timeout instead.
 concurrency:
   group: forecast-data
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     name: Build and publish
     runs-on: ubuntu-latest
+    # The whole job takes about a minute; GitHub's default would let a hung
+    # download sit on the concurrency group for six hours, i.e. a whole model
+    # cycle.
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

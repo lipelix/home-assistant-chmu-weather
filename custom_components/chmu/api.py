@@ -16,6 +16,7 @@ from .const import (
     METADATA_ELEMENTS_PREFIX,
     METADATA_STATIONS_PREFIX,
     OBS_TYPE_10M,
+    USER_AGENT,
     WMO_WSI_PREFIX,
 )
 
@@ -65,10 +66,14 @@ def wsi_to_station_id(wsi: str) -> str:
     return wsi
 
 
-def _new_session() -> requests.Session:
-    """Create a requests session with the integration User-Agent."""
+def new_session() -> requests.Session:
+    """Create a requests session with the integration User-Agent.
+
+    Shared with forecast.py so both ČHMÚ and the forecast site see one
+    identifiable client.
+    """
     session = requests.Session()
-    session.headers.update({"User-Agent": "Home-Assistant-CHMU-Integration/1.0"})
+    session.headers.update({"User-Agent": USER_AGENT})
     return session
 
 
@@ -159,7 +164,7 @@ def get_stations_with_coords() -> dict[str, dict[str, Any]]:
         Dict mapping station ID to station info with name, latitude, longitude
         and the list of supported sensor keys.
     """
-    session = _new_session()
+    session = new_session()
 
     try:
         elements_by_wsi = _fetch_station_elements(session)
@@ -218,7 +223,7 @@ class ChmuApi:
         self.station_id = station_id
         self.wsi = station_id_to_wsi(station_id)
         self.station_name = station_name or f"Station {station_id}"
-        self.session = _new_session()
+        self.session = new_session()
 
     def get_current_data(self) -> dict[str, Any]:
         """Get current weather data from ČHMÚ."""

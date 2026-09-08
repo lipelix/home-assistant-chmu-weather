@@ -6,16 +6,12 @@ coordinates - see forecast.py for why it is fetched from a static site rather
 than from ČHMÚ directly.
 """
 
-import logging
-
 from homeassistant.components.weather import (
     Forecast,
     WeatherEntity,
     WeatherEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    UnitOfLength,
     UnitOfPrecipitationDepth,
     UnitOfPressure,
     UnitOfSpeed,
@@ -26,24 +22,24 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
+from . import ChmuConfigEntry
 from .const import CONF_STATION_ID, CONF_STATION_NAME, DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: ChmuConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the ČHMÚ weather entity from a config entry."""
-    data = hass.data[DOMAIN][entry.entry_id]
+    data = entry.runtime_data
     station_id = entry.data[CONF_STATION_ID]
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
 
     async_add_entities(
         [
             ChmuWeather(
+                entry,
                 data.coordinator,
                 data.forecast_coordinator,
                 station_id,
@@ -63,16 +59,16 @@ class ChmuWeather(CoordinatorEntity, WeatherEntity):
     _attr_native_pressure_unit = UnitOfPressure.HPA
     _attr_native_wind_speed_unit = UnitOfSpeed.METERS_PER_SECOND
     _attr_native_precipitation_unit = UnitOfPrecipitationDepth.MILLIMETERS
-    _attr_native_visibility_unit = UnitOfLength.KILOMETERS
     _attr_supported_features = (
         WeatherEntityFeature.FORECAST_DAILY | WeatherEntityFeature.FORECAST_HOURLY
     )
 
     def __init__(
-        self, coordinator, forecast_coordinator, station_id, station_name
+        self, entry, coordinator, forecast_coordinator, station_id, station_name
     ) -> None:
         """Initialize the weather entity."""
         super().__init__(coordinator)
+        self._entry = entry
         self._forecast_coordinator = forecast_coordinator
         self._station_id = station_id
         self._station_name = station_name
@@ -99,9 +95,19 @@ class ChmuWeather(CoordinatorEntity, WeatherEntity):
 
     @callback
     def _handle_forecast_update(self) -> None:
-        """Write the new state and push the forecast to its subscribers."""
+        """Write the new state and push the forecast to its subscribers.
+
+        Pushing to the forecast subscribers is a coroutine, so it needs a task.
+        It is created on the config entry rather than on hass so that unloading
+        the entry cancels it instead of leaving it running against a removed
+        entity.
+        """
         self.async_write_ha_state()
-        self.hass.async_create_task(self.async_update_listeners(("daily", "hourly")))
+        self._entry.async_create_task(
+            self.hass,
+            self.async_update_listeners(("daily", "hourly")),
+            name=f"chmu forecast push {self._station_id}",
+        )
 
     @property
     def _measured(self) -> dict:

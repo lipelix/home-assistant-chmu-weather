@@ -8,6 +8,10 @@ CONF_STATION_ID = "station_id"
 CONF_STATION_NAME = "station_name"
 CONF_STATION_ELEMENTS = "station_elements"
 
+# Sent by every outgoing request so ČHMÚ and GitHub Pages can attribute the
+# traffic to this integration.
+USER_AGENT = "Home-Assistant-CHMU-Integration/1.0"
+
 # API endpoints
 API_BASE_URL = "https://opendata.chmi.cz/meteorology/climate"
 API_NOW_PATH = "/now/data"

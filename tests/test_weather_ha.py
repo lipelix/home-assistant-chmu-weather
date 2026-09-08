@@ -12,6 +12,7 @@ forecast subscription contract.
 """
 
 import json
+import threading
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
@@ -158,9 +159,51 @@ async def setup_entry(hass, forecast_response, measured_response):
     entry.add_to_hass(hass)
 
     assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    # wait_background_tasks because the first forecast refresh is a background
+    # task on the entry, which a plain block_till_done does not cover.
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     return entry
+
+
+async def test_setup_does_not_wait_for_the_forecast(hass, measured_response):
+    """Setting up the entry must not block on the forecast download.
+
+    The forecast comes from a static site on the public internet, so a slow or
+    unreachable CDN would otherwise hold up Home Assistant's startup for as
+    long as the request takes.
+    """
+    response = MagicMock()
+    response.status_code = 200
+    response.headers = {"ETag": 'W/"test"'}
+    response.raise_for_status.return_value = None
+    response.json.return_value = _published_document(RUN)
+
+    release = threading.Event()
+
+    def blocked_get(*args, **kwargs):
+        release.wait(10)
+        return response
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Plzeň, Mikulka",
+        data={"station_id": "11450", "station_name": "Plzeň, Mikulka"},
+    )
+    entry.add_to_hass(hass)
+
+    with patch("requests.Session.get", side_effect=blocked_get):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+
+        # Setup is done while the download is still in flight.
+        assert entry.runtime_data.forecast_coordinator.data is None
+        assert hass.states.get("weather.plzen_mikulka") is not None
+
+        release.set()
+    # Background tasks are not covered by a plain async_block_till_done, so the
+    # forecast landing has to be waited for explicitly.
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert entry.runtime_data.forecast_coordinator.data is not None
 
 
 async def test_weather_entity_reports_measured_conditions(hass, setup_entry):
@@ -181,7 +224,7 @@ async def test_weather_entity_reports_measured_conditions(hass, setup_entry):
 async def test_a_clear_sky_after_sunset_is_clear_night(hass, setup_entry, freezer):
     """The condition follows the sun at the station, not just cloud cover."""
     freezer.move_to(FROZEN_NIGHT)
-    coordinator = hass.data[DOMAIN][setup_entry.entry_id].forecast_coordinator
+    coordinator = setup_entry.runtime_data.forecast_coordinator
     await coordinator.async_refresh()
     await hass.async_block_till_done()
 
@@ -256,7 +299,7 @@ async def test_a_new_model_run_updates_the_entity(hass, setup_entry):
     response.raise_for_status.return_value = None
     response.json.return_value = overcast
 
-    coordinator = hass.data[DOMAIN][setup_entry.entry_id].forecast_coordinator
+    coordinator = setup_entry.runtime_data.forecast_coordinator
     with patch("requests.Session.get", return_value=response):
         await coordinator.async_refresh()
         await hass.async_block_till_done()
@@ -271,7 +314,7 @@ async def test_a_transient_forecast_failure_keeps_the_last_forecast(hass, setup_
     FORECAST_UNUSABLE_AFTER, so keeping it is strictly better than blanking the
     card until the next hourly poll.
     """
-    coordinator = hass.data[DOMAIN][setup_entry.entry_id].forecast_coordinator
+    coordinator = setup_entry.runtime_data.forecast_coordinator
     with patch("requests.Session.get", side_effect=OSError("boom")):
         await coordinator.async_refresh()
         await hass.async_block_till_done()
@@ -305,7 +348,7 @@ async def test_a_forecast_too_old_to_use_is_dropped(hass, setup_entry):
     response.raise_for_status.return_value = None
     response.json.return_value = ancient
 
-    coordinator = hass.data[DOMAIN][setup_entry.entry_id].forecast_coordinator
+    coordinator = setup_entry.runtime_data.forecast_coordinator
     with patch("requests.Session.get", return_value=response):
         await coordinator.async_refresh()
         await hass.async_block_till_done()
@@ -329,7 +372,7 @@ async def test_a_measurement_outage_leaves_the_forecast_usable(
     it, even though the forecast itself was fine.
     """
     measured_response.side_effect = ValueError("no data available for station 11450")
-    coordinator = hass.data[DOMAIN][setup_entry.entry_id].coordinator
+    coordinator = setup_entry.runtime_data.coordinator
     await coordinator.async_refresh()
     await hass.async_block_till_done()
 

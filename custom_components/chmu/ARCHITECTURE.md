@@ -144,9 +144,12 @@ ALADIN CZ_1km  ──70 MB GRIB1──▶  tools/aladin.py       ┐
   current conditions, the model for the forecast.
 
 Two coordinators run per config entry. A forecast failure is logged and leaves
-the measured sensors untouched; a run older than 12 hours warns, and one older
-than 48 hours is refused, which is how a stopped publishing job becomes visible
-instead of silently serving a week old forecast.
+the measured sensors untouched. The two age limits measure different things:
+data published more than 18 hours ago warns (the publishing job has missed
+three slots, allowing for GitHub's scheduling drift), while a model run older
+than 48 hours is refused outright however recently it was published. That is
+how a stopped publishing job becomes visible instead of silently serving a week
+old forecast.
 
 Values are published in the model's own units and mapped to Home Assistant
 conditions in the integration, so the mapping can change without regenerating
