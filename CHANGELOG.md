@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-09-08
+
+### Added
+- `weather.` entity per station: 72 hours hourly and 3 days daily, from the
+  ALADIN CZ_1km model (~1 km grid) sampled at the station's own coordinates.
+  Current conditions stay measured; only the condition comes from the model,
+  because ČHMÚ stations report no cloud cover
+- Per-station forecast data pipeline (`.github/workflows/forecast-data.yml`):
+  a scheduled job decodes one ALADIN GRIB run and publishes about 1.5 kB per
+  station as a static site, so the integration downloads its own station's file
+  instead of ~70 MB of GRIB. Revalidated with an ETag, so an unchanged forecast
+  transfers no body
+- Day and night conditions from the sun's actual position at the station
+- A `Tests` job in CI, which previously ran no tests at all
+
+### Changed
+- Forecast age is surfaced rather than hidden: data published more than 18 hours
+  ago logs a warning, and a model run older than 48 hours is refused instead of
+  being served as a week old forecast
+- The forecast and the measurements fail independently - neither outage takes
+  the other down - and the first forecast download no longer delays startup
+
 ## [1.4.0] - 2026-09-06
 
 ### Added
