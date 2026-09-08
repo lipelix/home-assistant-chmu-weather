@@ -12,8 +12,10 @@ on:
     - cron: "0 0 * * *"
 
 # Superseding a pull request with a new push makes the older run pointless.
+# Keyed on head_ref so a merge to main cannot cancel the nightly schedule,
+# which shares refs/heads/main with it.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:

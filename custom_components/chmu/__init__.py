@@ -14,7 +14,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .api import ChmuApi
 from .const import DOMAIN
-from .forecast import ChmuForecastApi, StationForecast
+from .forecast import ChmuForecastApi, ForecastUnusable, StationForecast
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,18 +53,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def async_update_forecast():
         """Fetch the per-station forecast.
 
-        A missing forecast must not take the measured sensors down with it, so
-        failures are logged and the entity simply reports no forecast.
+        The two failure kinds are deliberately handled differently. A fetch that
+        did not work raises UpdateFailed, which keeps the last forecast on the
+        coordinator - a few hours old is far better than none, and how old it may
+        get is already bounded by FORECAST_UNUSABLE_AFTER. A forecast that
+        arrived but is too old returns None, because there is no point falling
+        back to an even older one.
+
+        Either way the measured sensors are on their own coordinator and are
+        unaffected.
         """
         try:
             return await hass.async_add_executor_job(forecast_api.get_forecast)
-        except Exception:
+        except ForecastUnusable as err:
             _LOGGER.warning(
-                "Could not fetch the ČHMÚ forecast for station %s",
-                station_id,
-                exc_info=True,
+                "No usable ČHMÚ forecast for station %s: %s", station_id, err
             )
             return None
+        except Exception as err:
+            raise UpdateFailed(
+                f"Could not fetch the ČHMÚ forecast for station {station_id}: {err}"
+            ) from err
 
     coordinator = DataUpdateCoordinator(
         hass,

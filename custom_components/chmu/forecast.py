@@ -149,6 +149,14 @@ def condition(
     return CONDITION_CLOUDY
 
 
+class ForecastUnusable(Exception):
+    """The published forecast is too old to be worth showing.
+
+    Distinct from a fetch failure: the download worked, the answer is just not
+    usable, so the previous forecast must not be kept either.
+    """
+
+
 def _mean(values: list[float]) -> float | None:
     return round(sum(values) / len(values)) if values else None
 
@@ -195,21 +203,43 @@ def _hourly_entries(
 ) -> list[dict[str, Any]]:
     """Map the published hourly rows to Home Assistant forecast entries."""
     current_hour = now.replace(minute=0, second=0, microsecond=0)
+    rows = document.get("hourly") or []
+
+    # The publisher stamps each precipitation amount with the END of the hour it
+    # accumulated over, because it is the difference between two cumulative
+    # model fields. Home Assistant reads an hourly entry the other way round -
+    # the amount falls in the hour that STARTS at the entry's timestamp - so the
+    # value belonging to an entry is the one published for the following hour.
+    # The type shifts with the amount: in the published data a non-zero type
+    # appears exactly on the hours with a non-zero difference, so it describes
+    # the same accumulation interval rather than an instant.
+    precipitation_by_time = {
+        _parse_time(row["datetime"]): (
+            row["precipitation"],
+            row.get("precipitation_type"),
+        )
+        for row in rows
+        if row.get("precipitation") is not None
+    }
 
     entries = []
-    for row in document.get("hourly", []):
+    for row in rows:
         valid_time = _parse_time(row["datetime"])
         # Keep the hour that is currently running; drop everything before it.
         if valid_time < current_hour:
             continue
+
+        precipitation, precipitation_type = precipitation_by_time.get(
+            valid_time + timedelta(hours=1), (None, None)
+        )
 
         entry: dict[str, Any] = {
             "_valid_time": valid_time,
             "datetime": valid_time.isoformat(),
             "condition": condition(
                 cloud_coverage=row.get("cloud_coverage"),
-                precipitation=row.get("precipitation"),
-                precipitation_type=row.get("precipitation_type"),
+                precipitation=precipitation,
+                precipitation_type=precipitation_type,
                 temperature=row.get("temperature"),
                 night=is_night(valid_time, latitude, longitude),
             ),
@@ -217,7 +247,7 @@ def _hourly_entries(
         for source_key, target_key in _HOURLY_KEYS.items():
             if (value := row.get(source_key)) is not None:
                 entry[target_key] = value
-        if (precipitation := row.get("precipitation")) is not None:
+        if precipitation is not None:
             entry["native_precipitation"] = precipitation
         if (wind_speed := row.get("wind_speed")) is not None:
             # Published in km/h; the integration reports wind in m/s so that
@@ -239,17 +269,27 @@ def _daily_entries(
     today = now.astimezone(LOCAL_TIMEZONE).date().isoformat()
 
     entries = []
-    for row in document.get("daily", []):
+    for row in document.get("daily") or []:
         date = row["date"]
         if date < today:
             continue
 
+        # The extremes are 12 hour fields, so the last day a run reaches often
+        # has the overnight low but not the following afternoon's high. A tile
+        # with no high renders as an empty temperature in Home Assistant, and
+        # the hours behind it cover only part of the day, so drop the day
+        # instead of publishing a half one.
+        high = row.get("temperature")
+        if high is None:
+            continue
+
         hours = by_date.get(date, [])
         midnight = datetime.fromisoformat(date).replace(tzinfo=LOCAL_TIMEZONE)
-        entry: dict[str, Any] = {"datetime": midnight.isoformat()}
+        entry: dict[str, Any] = {
+            "datetime": midnight.isoformat(),
+            "native_temperature": high,
+        }
 
-        if (high := row.get("temperature")) is not None:
-            entry["native_temperature"] = high
         if (low := row.get("templow")) is not None:
             entry["native_templow"] = low
 
@@ -362,30 +402,48 @@ class ChmuForecastApi:
         self._etag: str | None = None
         self._document: dict[str, Any] | None = None
 
+    def _fetch(self) -> dict[str, Any]:
+        """Return the published document, revalidating the cached copy.
+
+        The site is on a CDN with weak ETags, so an unchanged forecast answers
+        304 with no body, which is what keeps this affordable to host.
+        """
+        headers = {"If-None-Match": self._etag} if self._etag else {}
+        response = self.session.get(self.url, headers=headers, timeout=30)
+
+        if response.status_code == 304:
+            if self._document is not None:
+                _LOGGER.debug("Forecast for %s unchanged (304)", self.wsi)
+                return self._document
+            # 304 without a cached copy to serve: the body is empty, so parsing
+            # it would fail on nothing useful. Drop the validator and ask again.
+            _LOGGER.debug("Got 304 for %s with nothing cached, refetching", self.wsi)
+            self._etag = None
+            response = self.session.get(self.url, timeout=30)
+
+        response.raise_for_status()
+        document = response.json()
+        self._document = document
+        self._etag = response.headers.get("ETag")
+        return document
+
     def get_forecast(self) -> StationForecast:
         """Return the station forecast, revalidating the cached copy.
 
         The site is on a CDN with weak ETags, so an unchanged forecast costs a
         304 with no body. That is what keeps this affordable to host.
         """
-        headers = {"If-None-Match": self._etag} if self._etag else {}
-        response = self.session.get(self.url, headers=headers, timeout=30)
-
-        if response.status_code == 304 and self._document is not None:
-            _LOGGER.debug("Forecast for %s unchanged (304)", self.wsi)
-        else:
-            response.raise_for_status()
-            self._document = response.json()
-            self._etag = response.headers.get("ETag")
+        document = self._fetch()
 
         now = datetime.now(UTC)
-        forecast = parse_forecast(self._document, now)
+        forecast = parse_forecast(document, now)
 
         if forecast.is_unusable(now):
-            raise ValueError(
+            raise ForecastUnusable(
                 f"forecast for {self.wsi} is from {forecast.run:%Y-%m-%d %HZ}, "
-                f"{forecast.age(now).days} days old"
+                f"{forecast.age(now) // timedelta(hours=1)} hours old"
             )
+
         if forecast.is_stale(now):
             _LOGGER.warning(
                 "ČHMÚ forecast for %s is from %s, %d hours old; the publishing "
