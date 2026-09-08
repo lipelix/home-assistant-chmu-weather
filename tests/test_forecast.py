@@ -51,11 +51,16 @@ def _series(*amounts, first_offset=0, **shared):
     ]
 
 
-def _document(hourly=None, daily=None, run=NOW, schema=1):
+def _document(hourly=None, daily=None, run=NOW, schema=1, generated=...):
     return {
         "schema": schema,
         "model": "ALADIN CZ_1km",
         "run": run.isoformat().replace("+00:00", "Z"),
+        # Defaults to the run time; the publisher stamps the real publication
+        # time, which is what staleness is measured from.
+        "generated": (run if generated is ... else generated)
+        .isoformat()
+        .replace("+00:00", "Z"),
         "station": {
             "station_id": "0-20000-0-11450",
             "name": "Plzeň, Mikulka",
@@ -383,17 +388,53 @@ def test_a_fresh_run_is_neither_stale_nor_unusable():
     assert not parsed.is_unusable(NOW)
 
 
-def test_a_run_older_than_twelve_hours_is_stale():
-    parsed = fc.parse_forecast(_document(run=NOW - timedelta(hours=13)), NOW)
+def test_staleness_is_measured_from_publication_not_from_the_run():
+    """An old run that was just published is not a sign of a stopped job.
+
+    The builder serves the newest model run that has every parameter, so it
+    legitimately republishes an older run; GitHub also delays the schedule by
+    hours. Measuring from the run time warned about a healthy pipeline.
+    """
+    parsed = fc.parse_forecast(
+        _document(run=NOW - timedelta(hours=20), generated=NOW - timedelta(minutes=10)),
+        NOW,
+    )
+
+    assert not parsed.is_stale(NOW)
+    assert parsed.publication_age(NOW) < timedelta(hours=1)
+    # The content is still 20 hours old, and age() keeps saying so.
+    assert parsed.age(NOW) == timedelta(hours=20)
+
+
+def test_a_forecast_not_published_for_eighteen_hours_is_stale():
+    parsed = fc.parse_forecast(
+        _document(run=NOW - timedelta(hours=20), generated=NOW - timedelta(hours=19)),
+        NOW,
+    )
 
     assert parsed.is_stale(NOW)
     assert not parsed.is_unusable(NOW)
 
 
-def test_a_run_older_than_two_days_is_unusable():
-    parsed = fc.parse_forecast(_document(run=NOW - timedelta(hours=49)), NOW)
+def test_staleness_falls_back_to_the_run_without_a_publication_time():
+    document = _document(run=NOW - timedelta(hours=19))
+    del document["generated"]
+
+    parsed = fc.parse_forecast(document, NOW)
+
+    assert parsed.generated is None
+    assert parsed.is_stale(NOW)
+
+
+def test_a_run_older_than_two_days_is_unusable_however_fresh_the_publish():
+    # Keyed on the model run on purpose: if ČHMÚ stops producing runs, the job
+    # keeps republishing the same ageing content.
+    parsed = fc.parse_forecast(
+        _document(run=NOW - timedelta(hours=49), generated=NOW), NOW
+    )
 
     assert parsed.is_unusable(NOW)
+    assert not parsed.is_stale(NOW)
 
 
 # --- the download client ---------------------------------------------------
@@ -403,7 +444,7 @@ def test_a_run_older_than_two_days_is_unusable():
 # session is injected.
 
 
-def _live_document(age_hours: float = 0.0, steps: int = 6):
+def _live_document(age_hours: float = 0.0, steps: int = 6, published_ago=None):
     """Build a document whose run sits ``age_hours`` before the real clock.
 
     ChmuForecastApi reads the wall clock, so its tests cannot use the frozen
@@ -431,7 +472,13 @@ def _live_document(age_hours: float = 0.0, steps: int = 6):
         "schema": 1,
         "model": "ALADIN CZ_1km",
         "run": run.isoformat().replace("+00:00", "Z"),
-        "generated": run.isoformat().replace("+00:00", "Z"),
+        "generated": (
+            run
+            if published_ago is None
+            else datetime.now(UTC) - timedelta(hours=published_ago)
+        )
+        .isoformat()
+        .replace("+00:00", "Z"),
         "station": {
             "station_id": "0-20000-0-11450",
             "name": "Plzeň, Mikulka",
@@ -523,11 +570,20 @@ def test_a_forecast_too_old_to_use_is_refused():
         api.get_forecast()
 
 
-def test_a_stale_forecast_is_served_with_a_warning(caplog):
-    api, _ = _api(_response(payload=_live_document(age_hours=13)))
+def test_a_forecast_nobody_has_republished_is_served_with_a_warning(caplog):
+    api, _ = _api(_response(payload=_live_document(age_hours=20, published_ago=19)))
 
     with caplog.at_level(logging.WARNING):
         forecast = api.get_forecast()
 
     assert forecast.station_name == "Plzeň, Mikulka"
     assert "may have stopped" in caplog.text
+
+
+def test_an_old_run_that_was_just_published_warns_about_nothing(caplog):
+    api, _ = _api(_response(payload=_live_document(age_hours=10, published_ago=0)))
+
+    with caplog.at_level(logging.WARNING):
+        api.get_forecast()
+
+    assert caplog.text == ""

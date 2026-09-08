@@ -318,6 +318,35 @@ async def test_a_forecast_too_old_to_use_is_dropped(hass, setup_entry):
     assert state.attributes["temperature"] == 21.3
 
 
+async def test_a_measurement_outage_leaves_the_forecast_usable(
+    hass, setup_entry, measured_response
+):
+    """The two feeds fail independently.
+
+    ČHMÚ stops publishing a station's 10 minute file for a while after local
+    midnight. That used to make the entity unavailable, and an unavailable
+    entity makes weather.get_forecasts raise for every automation that calls
+    it, even though the forecast itself was fine.
+    """
+    measured_response.side_effect = ValueError("no data available for station 11450")
+    coordinator = hass.data[DOMAIN][setup_entry.entry_id].coordinator
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+
+    state = hass.states.get("weather.plzen_mikulka")
+    result = await hass.services.async_call(
+        "weather",
+        "get_forecasts",
+        {"entity_id": "weather.plzen_mikulka", "type": "daily"},
+        blocking=True,
+        return_response=True,
+    )
+
+    assert coordinator.last_update_success is False
+    assert state.state != "unavailable"
+    assert len(result["weather.plzen_mikulka"]["forecast"]) == 3
+
+
 async def test_sensors_still_work_alongside_the_weather_entity(hass, setup_entry):
     """The measured sensors are unaffected by the added forecast coordinator."""
     state = hass.states.get("sensor.plzen_mikulka_temperature")

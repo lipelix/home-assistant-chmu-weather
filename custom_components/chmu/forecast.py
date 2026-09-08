@@ -169,6 +169,7 @@ class StationForecast:
     latitude: float
     longitude: float
     run: datetime
+    generated: datetime | None = None
     hourly: list[dict[str, Any]] = field(default_factory=list)
     daily: list[dict[str, Any]] = field(default_factory=list)
 
@@ -176,12 +177,20 @@ class StationForecast:
         """Return how long ago the model run this forecast came from started."""
         return now - self.run
 
+    def publication_age(self, now: datetime) -> timedelta:
+        """Return how long ago this forecast was published.
+
+        Distinct from age(): the builder serves the newest model run that is
+        complete, so a freshly published file can carry a run several hours old.
+        """
+        return now - (self.generated or self.run)
+
     def is_stale(self, now: datetime) -> bool:
-        """Return whether the run is old enough to be worth a warning."""
-        return self.age(now) > FORECAST_STALE_AFTER
+        """Return whether the publishing job looks like it has stopped."""
+        return self.publication_age(now) > FORECAST_STALE_AFTER
 
     def is_unusable(self, now: datetime) -> bool:
-        """Return whether the run is too old to publish at all."""
+        """Return whether the model run behind this forecast is too old."""
         return self.age(now) > FORECAST_UNUSABLE_AFTER
 
     def current(self, now: datetime) -> dict[str, Any] | None:
@@ -382,6 +391,9 @@ def parse_forecast(document: dict[str, Any], now: datetime) -> StationForecast:
         latitude=latitude,
         longitude=longitude,
         run=_parse_time(document["run"]),
+        generated=(
+            _parse_time(document["generated"]) if document.get("generated") else None
+        ),
         hourly=hourly,
         daily=_daily_entries(document, hourly, now),
     )
@@ -446,11 +458,10 @@ class ChmuForecastApi:
 
         if forecast.is_stale(now):
             _LOGGER.warning(
-                "ČHMÚ forecast for %s is from %s, %d hours old; the publishing "
-                "job may have stopped",
+                "ČHMÚ forecast for %s was last published %d hours ago; the "
+                "publishing job may have stopped",
                 self.wsi,
-                f"{forecast.run:%Y-%m-%d %HZ}",
-                forecast.age(now) // timedelta(hours=1),
+                forecast.publication_age(now) // timedelta(hours=1),
             )
 
         return forecast
