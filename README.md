@@ -47,10 +47,34 @@ The integration is configured via the UI (Config Flow). No YAML configuration is
   the 40 professional WMO stations plus ~430 automatic stations
 - Provides temperature, humidity, pressure, precipitation, wind speed and
   wind direction, plus the ČHMÚ text forecast for the Czech Republic
+- A weather entity with a **per-station forecast**: 72 hours hourly and 3 days
+  daily, from the ČHMÚ ALADIN 1 km model sampled at your station's coordinates
 - Creates only the sensors a station actually measures (many automatic
   stations report precipitation only)
 - Pre-selects the station nearest to your Home Assistant location
 - Easy configuration through the Home Assistant UI
+
+### Where the forecast comes from
+
+ČHMÚ publishes forecasts only as national prose for 14 regions or as raw model
+output — roughly 70 MB of GRIB per run, which no integration can download every
+hour. The national text is up to 10 °C off for mountain stations, so this
+integration does not use it for the forecast.
+
+Instead a scheduled job in this repository
+([`.github/workflows/forecast-data.yml`](.github/workflows/forecast-data.yml))
+downloads one ALADIN CZ_1km run, samples the ~1 km grid at all 758 station
+coordinates and publishes about 1.5 kB per station as a static site. Your Home
+Assistant fetches only its own station's file, and revalidates with an ETag so
+an unchanged forecast transfers no body at all.
+
+Nothing about that request is logged, counted or analysed: no accounts, no
+analytics, no personal data. If the job ever stops, the integration warns after
+12 hours and stops serving the forecast after 48 rather than quietly showing a
+week old one. The measured sensors keep working either way.
+
+See [`custom_components/chmu/ARCHITECTURE.md`](custom_components/chmu/ARCHITECTURE.md)
+for the pipeline in detail.
 
 ## Development
 

@@ -6,6 +6,7 @@ Custom Home Assistant integration for Czech Hydrometeorological Institute (ČHM�
 
 - 🌡️ **Real-time weather data** from ČHMÚ meteorological stations
 - 📊 **Multiple sensors**: Temperature, Humidity, Pressure, Precipitation, Wind Speed, Wind Direction, Weather Description
+- 🌤️ **Weather entity with a per-station forecast** - 72 hours hourly plus 3 days daily, from the ALADIN 1 km model sampled at your station
 - 📈 **Historical data support** via Home Assistant's built-in history tracking
 - 🗺️ **41+ stations** across Czech Republic
 - 🎯 **Smart station selection** - automatically suggests nearest station based on your Home location
@@ -76,6 +77,44 @@ Each station provides the following sensors:
 | Wind Direction | ° | - |
 | Weather Description | text | - |
 
+## Weather Entity
+
+Alongside the sensors each station gets a `weather.` entity. Current conditions
+are the station's own measurements; the forecast is the ČHMÚ ALADIN CZ_1km model
+(about 1 km grid spacing) sampled at that station's coordinates.
+
+| | |
+|---|---|
+| Hourly forecast | up to 72 hours |
+| Daily forecast | 3 days, with the 12 hour high and low |
+| Fields | condition, temperature, humidity, cloud cover, precipitation, wind speed and bearing |
+| Refresh | hourly; the model itself runs at 00, 06, 12 and 18 UTC |
+
+![Weather entity with the daily and hourly forecast next to the measured sensors](../../assets/weather-forecast-dashboard.png)
+
+24 hours of the hourly forecast, with the day/night variants and the rain hours
+the model predicts:
+
+![Hourly forecast over a day and a night](../../assets/weather-forecast-hourly.png)
+
+Use it with the standard weather card:
+
+```yaml
+type: weather-forecast
+entity: weather.plzen_mikulka
+forecast_type: daily
+show_current: true
+```
+
+ČHMÚ publishes forecasts only as national prose or as roughly 70 MB of GRIB per
+model run, neither of which an integration can download on every update. A
+GitHub Actions job in this repository samples the GRIB at every station and
+publishes a few kilobytes per station as a static site, which is what the
+integration fetches. Nothing about the request is recorded: no accounts, no
+analytics, no personal data. If that job ever stops, the integration warns after
+12 hours and stops serving the forecast after 48; the measured sensors are
+unaffected.
+
 ## Dashboard Configuration
 
 ### History Graph Card
@@ -118,8 +157,11 @@ title: ČHMÚ - Venkovní počasí
 Data is fetched from ČHMÚ's Open Data portal:
 - **API**: https://opendata.chmi.cz/meteorology/climate/
 - **Forecast text API**: https://opendata.chmi.cz/meteorology/weather/forecast/now/
-- **Update interval**: 10 minutes
-- **Data type**: Real measured values + text forecast description
+- **Forecast model**: https://opendata.chmi.cz/meteorology/weather/nwp_aladin/CZ_1km/
+  (sampled per station and republished at
+  https://lipelix.github.io/home-assistant-chmu-weather/v1/)
+- **Update interval**: 10 minutes for measurements, 1 hour for the forecast
+- **Data type**: Real measured values + text forecast description + per-station model forecast
 
 ## Troubleshooting
 
