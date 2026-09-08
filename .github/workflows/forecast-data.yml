@@ -1,0 +1,56 @@
+name: Forecast data
+
+# Samples the ČHMÚ ALADIN CZ_1km model at every station coordinate and publishes
+# the result as a static site, so the integration downloads a few kilobytes for
+# its own station instead of ~70 MB of GRIB for the whole country.
+#
+# ALADIN runs at 00/06/12/18 UTC and lands on opendata roughly 75 minutes later;
+# these times leave a margin on top of that.
+
+on:
+  schedule:
+    - cron: "30 1,7,13,19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A late run must not overwrite a newer one, and a stuck run must not block the
+# next model cycle.
+concurrency:
+  group: forecast-data
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # No third-party dependencies on purpose: tools/aladin.py decodes GRIB1
+      # with the standard library only.
+      - name: Build forecast data
+        run: python tools/build_forecast_data.py --out dist
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+      - name: Deploy to Pages
+        id: deploy
+        uses: actions/deploy-pages@v5
