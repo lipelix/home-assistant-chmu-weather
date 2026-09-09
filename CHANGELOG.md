@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- The forecast publishing job no longer loses a whole model cycle to one
+  dropped connection. It makes about fifteen requests to ČHMÚ per run and made
+  each of them exactly once, so a single TCP timeout failed the job and left
+  the published forecast on the previous run until the next scheduled slot -
+  which GitHub delays by up to five hours on top of the six hour interval.
+  Downloads now retry four times with a growing backoff. A 404 is still
+  answered immediately, so the station metadata fallback keeps working
+
 ## [1.6.0] - 2026-09-09
 
 ### Added

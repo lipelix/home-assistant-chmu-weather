@@ -32,8 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     # The whole job takes about a minute; GitHub's default would let a hung
     # download sit on the concurrency group for six hours, i.e. a whole model
-    # cycle.
-    timeout-minutes: 20
+    # cycle. The headroom is for the retries in build_forecast_data.py: a
+    # download that keeps timing out rather than failing outright can now spend
+    # four socket timeouts on one file before giving up.
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

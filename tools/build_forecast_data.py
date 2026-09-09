@@ -23,9 +23,12 @@ from __future__ import annotations
 
 import argparse
 import bz2
+import http.client
 import json
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
@@ -67,11 +70,50 @@ REQUIRED_PARAMS = (*HOURLY_PARAMS, PRECIPITATION_PARAM, *DAILY_PARAMS)
 
 _RUN_FILE_RE = re.compile(r"ALADCZ1K4opendata_(\d{10})_([A-Z0-9_]+)\.grb\.bz2")
 
+# One build makes about fifteen requests to opendata.chmi.cz and used to make
+# each of them once, so a single dropped connection failed the whole run - and
+# the next scheduled attempt is a model cycle away, which GitHub then delays by
+# up to five hours on top. That is what happened to run 34350942136: a TCP
+# connect timeout on the very first directory listing.
+RETRY_ATTEMPTS = 4
+RETRY_BACKOFF = timedelta(seconds=5)
+
+
+def _retryable(error: Exception) -> bool:
+    """Is this failure worth another attempt?
+
+    A 4xx is the server answering rather than failing, so retrying only burns
+    the run's time - and load_stations needs a 404 back promptly so it can ask
+    for yesterday's metadata instead. Everything else reaching here is a
+    transport failure, which is exactly the transient case retries exist for.
+    """
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code == 429 or error.code >= 500
+    return True
+
 
 def _get(url: str, timeout: int = 300) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.read()
+
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return response.read()
+        # HTTPException covers a body that stops mid-download; these files are
+        # tens of megabytes, so that is a real outcome and not an OSError.
+        except (OSError, http.client.HTTPException) as error:
+            if attempt == RETRY_ATTEMPTS or not _retryable(error):
+                raise
+            delay = RETRY_BACKOFF * attempt
+            print(
+                f"  {url} failed ({error!r}), attempt {attempt}/{RETRY_ATTEMPTS}, "
+                f"retrying in {delay.total_seconds():.0f}s",
+                file=sys.stderr,
+                flush=True,
+            )
+            time.sleep(delay.total_seconds())
+
+    raise AssertionError("unreachable: the last attempt either returns or raises")
 
 
 def find_latest_run() -> str:
