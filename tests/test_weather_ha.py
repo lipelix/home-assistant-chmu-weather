@@ -14,9 +14,11 @@ forecast subscription contract.
 import json
 import threading
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 
 pytest.importorskip(
     "pytest_homeassistant_custom_component",
@@ -366,10 +368,10 @@ async def test_a_measurement_outage_leaves_the_forecast_usable(
 ):
     """The two feeds fail independently.
 
-    ČHMÚ stops publishing a station's 10 minute file for a while after local
-    midnight. That used to make the entity unavailable, and an unavailable
-    entity makes weather.get_forecasts raise for every automation that calls
-    it, even though the forecast itself was fine.
+    A station can stop publishing its 10 minute file for a while. That used to
+    make the entity unavailable, and an unavailable entity makes
+    weather.get_forecasts raise for every automation that calls it, even though
+    the forecast itself was fine.
     """
     measured_response.side_effect = ValueError("no data available for station 11450")
     coordinator = setup_entry.runtime_data.coordinator
@@ -405,3 +407,126 @@ async def test_unload_removes_the_entity(hass, setup_entry):
 
     # Home Assistant keeps a restored placeholder around after an unload.
     assert hass.states.get("weather.plzen_mikulka").state == "unavailable"
+
+
+# ČHMÚ names the 10 minute file after the UTC day but publishes the new day's
+# first chunk only at about 01:02 UTC, so this instant is inside the nightly
+# gap reported in issue #5.
+MIDNIGHT_WINDOW = datetime(2026, 9, 9, 0, 30, tzinfo=UTC)
+
+PREVIOUS_DAY_10MIN = {
+    "data": {
+        "data": {
+            # Newest row first, on purpose: with the newest row last, an
+            # implementation that simply keeps the last row it sees would pass
+            # the assertion below without ever comparing timestamps.
+            "values": [
+                ["0-20000-0-11450", "T", "2026-09-08T23:50:00Z", 11.4, "", 0.0],
+                ["0-20000-0-11450", "T", "2026-09-08T23:40:00Z", 11.9, "", 0.0],
+                ["0-20000-0-11450", "H", "2026-09-08T23:50:00Z", 88.0, "", 0.0],
+            ]
+        }
+    }
+}
+
+
+def _json_response(payload: dict) -> MagicMock:
+    """Build a 200 response serving the given JSON body."""
+    response = MagicMock()
+    response.status_code = 200
+    response.headers = {}
+    response.raise_for_status.return_value = None
+    response.json.return_value = payload
+    return response
+
+
+def _not_found_response() -> MagicMock:
+    """Build a response that raises the 404 requests itself would raise."""
+    response = MagicMock()
+    response.status_code = 404
+    response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+        "404", response=SimpleNamespace(status_code=404)
+    )
+    return response
+
+
+async def test_setup_survives_the_nightly_chmu_data_gap(hass, freezer):
+    """A restart inside the nightly gap must still set the integration up.
+
+    Reading the previous UTC day keeps the sensors on the last real
+    measurement. Before that, the first refresh failed, setup raised
+    ConfigEntryNotReady and an unlucky reboot left the integration missing
+    entirely until ČHMÚ published again (#5).
+    """
+    freezer.move_to(MIDNIGHT_WINDOW)
+
+    def dispatch(url, *args, **kwargs):
+        if "10m-0-20000-0-11450-20260909.json" in url:
+            return _not_found_response()
+        if "10m-0-20000-0-11450-20260908.json" in url:
+            return _json_response(PREVIOUS_DAY_10MIN)
+        # The text forecast and the ALADIN file are out of scope here, and
+        # neither may be required for setup to finish.
+        raise OSError(f"unavailable: {url}")
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Plzeň, Mikulka",
+        data={
+            "station_id": "11450",
+            "station_name": "Plzeň, Mikulka",
+            "station_elements": ["temperature", "humidity"],
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch("requests.Session.get", side_effect=dispatch):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+        assert entry.runtime_data.coordinator.last_update_success is True
+
+        temperature = hass.states.get("sensor.plzen_mikulka_temperature")
+        # The newest row of the previous day, not the first one in the file.
+        assert float(temperature.state) == 11.4
+        assert float(hass.states.get("sensor.plzen_mikulka_humidity").state) == 88.0
+        # Home Assistant stamps the state with the time of the poll, so the
+        # real measurement time is only visible as an attribute.
+        assert temperature.attributes["measured_at"] == "2026-09-08T23:50:00Z"
+        assert temperature.last_updated > datetime(2026, 9, 9, tzinfo=UTC)
+
+
+async def test_a_measurement_past_the_bound_is_refused(hass, freezer):
+    """A station quiet since yesterday goes unavailable, not silently stale.
+
+    Serving the last row would put a day old value into long term statistics
+    stamped with the time of the poll, which is worse than the outage the
+    fallback was added to survive.
+    """
+    freezer.move_to(datetime(2026, 9, 9, 12, 0, tzinfo=UTC))
+
+    def dispatch(url, *args, **kwargs):
+        if "10m-0-20000-0-11450-20260909.json" in url:
+            return _not_found_response()
+        if "10m-0-20000-0-11450-20260908.json" in url:
+            return _json_response(PREVIOUS_DAY_10MIN)
+        raise OSError(f"unavailable: {url}")
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Plzeň, Mikulka",
+        data={
+            "station_id": "11450",
+            "station_name": "Plzeň, Mikulka",
+            "station_elements": ["temperature", "humidity"],
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch("requests.Session.get", side_effect=dispatch):
+        # Twelve hours old: setup fails the way any unreachable source does,
+        # and Home Assistant retries it.
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert hass.states.get("sensor.plzen_mikulka_temperature") is None

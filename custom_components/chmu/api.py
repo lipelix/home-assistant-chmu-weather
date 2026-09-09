@@ -2,7 +2,7 @@
 
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import requests
@@ -13,6 +13,8 @@ from .const import (
     API_METADATA_PATH,
     API_NOW_PATH,
     ELEMENT_MAP,
+    MEASUREMENT_STALE_AFTER,
+    MEASUREMENT_UNUSABLE_AFTER,
     METADATA_ELEMENTS_PREFIX,
     METADATA_STATIONS_PREFIX,
     OBS_TYPE_10M,
@@ -24,6 +26,54 @@ _LOGGER = logging.getLogger(__name__)
 _CR_TEXT_FORECAST_RE = re.compile(
     r'href="(web_pCRntx_\d{6}\.json)"[^<]*</a>\s+(\d{2}-[A-Za-z]{3}-\d{4}\s+\d{2}:\d{2})'
 )
+
+
+class NoStationData(Exception):
+    """A downloaded file carries no measurement rows for this station.
+
+    Deliberately not a ValueError: requests raises ValueError subclasses for a
+    malformed body and for a broken URL, and those must keep propagating. This
+    one means the file parsed and simply holds nothing for us, so another day
+    is worth trying.
+    """
+
+
+class MeasurementUnusable(Exception):
+    """The newest measurement is too old to present as a current reading.
+
+    Same shape as ForecastUnusable in forecast.py: the download worked, the
+    answer is just not usable, so it must not be served either.
+    """
+
+
+def _utc_day_candidates() -> tuple[datetime, datetime]:
+    """Return the current and previous UTC day, in the order to try them.
+
+    ČHMÚ names every published file after the UTC day. Both the metadata and
+    the measurement path need that pair, and they used to derive it
+    separately - which is how they came to disagree in the first place (#5).
+    """
+    now = datetime.now(UTC)
+    return now, now - timedelta(days=1)
+
+
+def _parse_timestamp(value: Any) -> datetime | None:
+    """Parse a ČHMÚ measurement timestamp into an aware datetime.
+
+    Returns None for anything unparseable rather than failing the poll: an
+    unexpected stamp format must not cost the reading itself, it only means
+    the age cannot be checked.
+    """
+    if not isinstance(value, str):
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
 
 # Fallback used when the station metadata cannot be downloaded.
 _FALLBACK_STATIONS = {
@@ -80,8 +130,14 @@ def new_session() -> requests.Session:
 def _fetch_metadata_with_fallback(
     session: requests.Session, log_context: str, prefix: str = METADATA_STATIONS_PREFIX
 ) -> dict[str, Any]:
-    """Fetch today's metadata or fall back to previous day when necessary."""
-    date_str = datetime.now().strftime("%Y%m%d")
+    """Fetch today's metadata or fall back to previous day when necessary.
+
+    The file is named after the UTC day and published at about 00:02 UTC, so
+    the fallback covers only that couple of minutes - plus a day ČHMÚ skips
+    entirely.
+    """
+    now, previous_day = _utc_day_candidates()
+    date_str = now.strftime("%Y%m%d")
     filename = f"{prefix}-{date_str}.json"
     url = f"{API_BASE_URL}{API_METADATA_PATH}/{filename}"
 
@@ -94,8 +150,7 @@ def _fetch_metadata_with_fallback(
     except requests.exceptions.HTTPError as err:
         if err.response.status_code == 404:
             # Try previous day's metadata
-            yesterday = datetime.now() - timedelta(days=1)
-            date_str = yesterday.strftime("%Y%m%d")
+            date_str = previous_day.strftime("%Y%m%d")
             filename = f"{prefix}-{date_str}.json"
             url = f"{API_BASE_URL}{API_METADATA_PATH}/{filename}"
 
@@ -227,11 +282,7 @@ class ChmuApi:
 
     def get_current_data(self) -> dict[str, Any]:
         """Get current weather data from ČHMÚ."""
-        now = datetime.now()
-
-        data = self._fetch_10min_data(now)
-        if not data:
-            raise ValueError(f"No data available for station {self.station_id}")
+        data = self._fetch_10min_data_with_fallback()
 
         # Text forecast is optional; measured station data should still work
         # even when forecast endpoint is unavailable.
@@ -252,26 +303,97 @@ class ChmuApi:
 
         return data
 
+    def _fetch_10min_data_with_fallback(self) -> dict[str, Any]:
+        """Return the latest usable 10 minute measurements for this station.
+
+        ČHMÚ names the data file after the UTC day but does not publish a new
+        day's first chunk until about 01:02 UTC, so for the first hour of every
+        UTC day only the previous day's file exists. Reading it keeps the
+        sensors on the last real measurement instead of dropping to
+        unavailable, and stops a restart inside that window from failing setup
+        with ConfigEntryNotReady.
+
+        How old the result may be is bounded by _check_freshness, not by which
+        file it came from: the fallback is written for a gap of about an hour,
+        but a station that stops reporting leaves yesterday's file sitting
+        there for a whole day.
+        """
+        now, previous_day = _utc_day_candidates()
+
+        data = self._fetch_10min_data(now)
+        if not data:
+            data = self._fetch_10min_data(previous_day)
+            if data:
+                _LOGGER.info(
+                    "ČHMÚ has published no data for station %s on %s yet, "
+                    "reading %s instead",
+                    self.station_id,
+                    now.strftime("%Y-%m-%d"),
+                    previous_day.strftime("%Y-%m-%d"),
+                )
+
+        if not data:
+            raise ValueError(f"No data available for station {self.station_id}")
+
+        self._check_freshness(data, now)
+        return data
+
+    def _check_freshness(self, data: dict[str, Any], now: datetime) -> None:
+        """Warn about an ageing measurement, refuse an unusable one.
+
+        A sensor state carries no age of its own - Home Assistant stamps it
+        with the time it was written - so an unbounded reading would enter long
+        term statistics as if it had just been measured.
+        """
+        measured_at = _parse_timestamp(data.get("timestamp"))
+        if measured_at is None:
+            return
+
+        age = now - measured_at
+        if age > MEASUREMENT_UNUSABLE_AFTER:
+            raise MeasurementUnusable(
+                f"the newest measurement for station {self.station_id} is from "
+                f"{measured_at:%Y-%m-%d %H:%MZ}, "
+                f"{age // timedelta(hours=1)} hours old"
+            )
+
+        if age > MEASUREMENT_STALE_AFTER:
+            _LOGGER.warning(
+                "The newest ČHMÚ measurement for station %s is %d hours old "
+                "(%s); the station may have stopped reporting",
+                self.station_id,
+                age // timedelta(hours=1),
+                data["timestamp"],
+            )
+
     def _fetch_10min_data(self, date: datetime) -> dict[str, Any] | None:
-        """Fetch 10-minute interval data for a specific date."""
-        # Format: 10m-{WSI}-{YYYYMMDD}.json
+        """Fetch 10-minute interval data for one UTC date.
+
+        Returns None when ČHMÚ has nothing for that date, so the caller can
+        try another day: the file may not be published yet, or it may carry no
+        rows for this station. A malformed body or an unexpected document
+        shape is not that case and keeps propagating.
+        """
+        # Format: 10m-{WSI}-{YYYYMMDD}.json, named after the UTC day - the
+        # measurement timestamps it holds are UTC as well.
         date_str = date.strftime("%Y%m%d")
         filename = f"10m-{self.wsi}-{date_str}.json"
         url = f"{API_BASE_URL}{API_NOW_PATH}/{filename}"
 
-        _LOGGER.debug(f"Fetching data from: {url}")
+        _LOGGER.debug("Fetching data from: %s", url)
 
         try:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
-
-            json_data = response.json()
-            return self._parse_chmu_data(json_data)
+            return self._parse_chmu_data(response.json())
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                _LOGGER.debug(f"Data file not found: {filename}")
+                _LOGGER.debug("Data file not found: %s", filename)
                 return None
             raise
+        except NoStationData as e:
+            _LOGGER.debug("Nothing for station %s in %s: %s", self.wsi, filename, e)
+            return None
 
     def _parse_chmu_data(self, json_data: dict[str, Any]) -> dict[str, Any]:
         """Parse CHMU JSON data format.
@@ -283,10 +405,20 @@ class ChmuApi:
         T (temp), H (humidity), P (pressure), SRA10M (precip),
         F (wind speed), D (wind dir)
         """
-        values = json_data.get("data", {}).get("data", {}).get("values", [])
+        # An absent values array means the published format changed, which is
+        # a different problem from a day with nothing in it and must not be
+        # retried as one.
+        document = json_data.get("data")
+        payload = document.get("data") if isinstance(document, dict) else None
+        if not isinstance(payload, dict) or "values" not in payload:
+            raise ValueError(
+                "Unexpected ČHMÚ document: no data.data.values array. "
+                "The published format may have changed."
+            )
 
+        values = payload["values"]
         if not values:
-            raise ValueError("No data values found in response")
+            raise NoStationData("the file carries no measurement rows")
 
         # Get the most recent values for each element
         latest_values = {}
@@ -311,7 +443,7 @@ class ChmuApi:
                 latest_values[element] = {"value": value, "timestamp": timestamp}
 
         if not latest_values:
-            raise ValueError(f"No data found for station {self.station_id}")
+            raise NoStationData(f"no rows for station {self.station_id}")
 
         # Map CHMU elements to our sensor values. Elements the station does not
         # measure are left out entirely instead of being reported as None.
@@ -334,7 +466,7 @@ class ChmuApi:
             return latest_values["T"]["timestamp"]
 
         timestamps = [entry["timestamp"] for entry in latest_values.values()]
-        return max(timestamps) if timestamps else datetime.now().isoformat()
+        return max(timestamps) if timestamps else datetime.now(UTC).isoformat()
 
     def _fetch_latest_cr_text_forecast(self) -> dict[str, Any]:
         """Fetch latest Czech Republic text forecast JSON."""

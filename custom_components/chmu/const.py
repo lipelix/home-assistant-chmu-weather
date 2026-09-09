@@ -39,6 +39,17 @@ FORECAST_SCHEMA_VERSION = 1
 FORECAST_STALE_AFTER = timedelta(hours=18)
 FORECAST_UNUSABLE_AFTER = timedelta(hours=48)
 
+# ČHMÚ rewrites a station's 10 minute file hourly at about HH:02 UTC, so a
+# healthy poll reads a measurement at most about 70 minutes old. Same two
+# threshold shape as the forecast above, and for the same reason: the
+# previous-day fallback in api.py exists to cover a gap of about an hour, but
+# nothing stops it from finding a day old row when a station goes quiet, and a
+# sensor state carries no age of its own - Home Assistant stamps it with the
+# time it was written. Warn while the reading is still worth showing, refuse
+# once serving it would put a stale value into long term statistics.
+MEASUREMENT_STALE_AFTER = timedelta(hours=2)
+MEASUREMENT_UNUSABLE_AFTER = timedelta(hours=6)
+
 # Station metadata files (meta1 = stations, meta2 = measured elements per station)
 METADATA_STATIONS_PREFIX = "meta1"
 METADATA_ELEMENTS_PREFIX = "meta2"

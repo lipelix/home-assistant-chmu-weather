@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .api import ChmuApi
+from .api import ChmuApi, MeasurementUnusable
 from .forecast import ChmuForecastApi, ForecastUnusable, StationForecast
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,9 +48,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
     forecast_api = ChmuForecastApi(station_id)
 
     async def async_update_data():
-        """Fetch data from API."""
+        """Fetch the station's own measurements.
+
+        A measurement too old to present is reported as such rather than as a
+        communication error: the download worked, so calling it one would send
+        the next person debugging this at the wrong thing.
+        """
         try:
             return await hass.async_add_executor_job(api.get_current_data)
+        except MeasurementUnusable as err:
+            raise UpdateFailed(
+                f"No usable ČHMÚ measurement for station {station_id}: {err}"
+            ) from err
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
 

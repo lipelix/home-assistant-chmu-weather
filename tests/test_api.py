@@ -1,6 +1,6 @@
 """Tests for CHMU API helpers."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from importlib import import_module
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -11,20 +11,32 @@ import requests
 api = import_module("custom_components.chmu.api")
 
 
-@pytest.fixture(autouse=True)
-def freeze_datetime(monkeypatch):
-    """Freeze datetime.now() to a known value for deterministic URLs."""
+def _freeze(monkeypatch, utc_now: datetime, local_now: datetime | None = None):
+    """Patch api.datetime so now(UTC) and a naive now() can disagree.
+
+    They are allowed to differ on purpose: ČHMÚ names its files after the UTC
+    day, while the local day on a Prague host rolls over one or two hours
+    earlier. Reading the local day is the bug behind issue #5, so the tests
+    have to be able to tell the two apart.
+    """
+    naive = local_now if local_now is not None else utc_now.replace(tzinfo=None)
 
     class FixedDatetime(datetime):
         @classmethod
-        def now(cls):
-            return cls(2025, 12, 21)
-
-        @classmethod
-        def utcnow(cls):
-            return cls(2025, 12, 21)
+        def now(cls, tz=None):
+            # Converted rather than returned as-is, so that asking for a
+            # non-UTC zone yields that zone's wall clock. Returning the UTC
+            # instant for every tz would make the double blind to the aware
+            # form of #5 - naming the file after the Prague day.
+            return utc_now.astimezone(tz) if tz is not None else naive
 
     monkeypatch.setattr(api, "datetime", FixedDatetime)
+
+
+@pytest.fixture(autouse=True)
+def freeze_datetime(monkeypatch):
+    """Freeze the clock to a known instant for deterministic URLs."""
+    _freeze(monkeypatch, datetime(2025, 12, 21, 12, 0, tzinfo=UTC))
 
 
 @pytest.fixture
@@ -172,7 +184,7 @@ def test_fetch_10min_data_uses_full_wsi_for_automatic_station(mock_session):
     }
     mock_session.get.return_value = _http_response(200, payload)
 
-    data = client._fetch_10min_data(api.datetime.now())
+    data = client._fetch_10min_data(api.datetime.now(UTC))
 
     url = mock_session.get.call_args.args[0]
     assert url.endswith("10m-0-203-0-10102001101-20251221.json")
@@ -284,3 +296,209 @@ def test_get_current_data_adds_weather_description(monkeypatch):
     assert data["temperature"] == 12
     assert data["weather_description"] == "Jasno až polojasno."
     assert data["weather_description_timestamp"] == "2026-03-02T03:19:33.067Z"
+
+
+def _10min_payload(wsi: str, timestamp: str, temperature: float) -> dict:
+    """Build a 10m data payload holding one temperature row."""
+    return {"data": {"data": {"values": [[wsi, "T", timestamp, temperature, "", 0.0]]}}}
+
+
+def test_fetch_10min_data_falls_back_to_previous_utc_day(mock_session, monkeypatch):
+    """Just after UTC midnight only the previous day's file exists (#5)."""
+    _freeze(monkeypatch, datetime(2025, 12, 21, 0, 30, tzinfo=UTC))
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.side_effect = [
+        _http_response(404),
+        _http_response(
+            200,
+            _10min_payload("0-20000-0-11518", "2025-12-20T23:50:00Z", -1.5),
+        ),
+    ]
+
+    data = client._fetch_10min_data_with_fallback()
+
+    assert data["temperature"] == -1.5
+    assert data["timestamp"] == "2025-12-20T23:50:00Z"
+
+    urls = [call.args[0] for call in mock_session.get.call_args_list]
+    assert urls[0].endswith("10m-0-20000-0-11518-20251221.json")
+    assert urls[1].endswith("10m-0-20000-0-11518-20251220.json")
+
+
+def test_fetch_10min_data_names_the_file_after_the_utc_day(mock_session, monkeypatch):
+    """A Prague host is already on the next local day at 00:30 CET (#5).
+
+    The file must still be the UTC one, which exists and holds current data,
+    not the local-dated one, which ČHMÚ has not published yet.
+    """
+    _freeze(
+        monkeypatch,
+        datetime(2025, 12, 21, 23, 30, tzinfo=UTC),
+        local_now=datetime(2025, 12, 22, 0, 30),
+    )
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.return_value = _http_response(
+        200, _10min_payload("0-20000-0-11518", "2025-12-21T23:20:00Z", 0.5)
+    )
+
+    data = client._fetch_10min_data_with_fallback()
+
+    assert data["temperature"] == 0.5
+    assert mock_session.get.call_count == 1
+    url = mock_session.get.call_args.args[0]
+    assert url.endswith("10m-0-20000-0-11518-20251221.json")
+
+
+def test_fetch_10min_data_falls_back_when_file_has_no_station_rows(
+    mock_session, monkeypatch
+):
+    """A published file carrying nothing for this station is not usable."""
+    _freeze(monkeypatch, datetime(2025, 12, 21, 0, 30, tzinfo=UTC))
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.side_effect = [
+        _http_response(
+            200, _10min_payload("0-20000-0-11782", "2025-12-21T00:20:00Z", 9.9)
+        ),
+        _http_response(
+            200, _10min_payload("0-20000-0-11518", "2025-12-20T23:50:00Z", -1.5)
+        ),
+    ]
+
+    assert client._fetch_10min_data_with_fallback()["temperature"] == -1.5
+    assert mock_session.get.call_count == 2
+
+
+def test_fetch_10min_data_raises_when_neither_day_is_available(mock_session):
+    """Both days missing is a real failure and must surface as one."""
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.side_effect = [_http_response(404), _http_response(404)]
+
+    with pytest.raises(ValueError, match="No data available for station 11518"):
+        client._fetch_10min_data_with_fallback()
+
+    # Without this the test also passes against the pre-fix code, which raised
+    # the identical message after a single request.
+    assert mock_session.get.call_count == 2
+
+
+def test_fetch_10min_data_propagates_server_errors(mock_session):
+    """A 500 is not a missing day, so it is not retried as one."""
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.side_effect = [_http_response(500), _http_response(404)]
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        client._fetch_10min_data_with_fallback()
+
+    assert mock_session.get.call_count == 1
+
+
+def test_metadata_is_fetched_for_the_utc_day(mock_session, monkeypatch):
+    """Metadata file names follow the UTC day too."""
+    _freeze(
+        monkeypatch,
+        datetime(2025, 12, 21, 23, 30, tzinfo=UTC),
+        local_now=datetime(2025, 12, 22, 0, 30),
+    )
+    mock_session.get.side_effect = [
+        _http_response(200, _elements_metadata(META2_ROWS)),
+        _http_response(200, _stations_metadata(META1_ROWS)),
+    ]
+
+    api.get_stations_with_coords()
+
+    urls = [call.args[0] for call in mock_session.get.call_args_list]
+    assert urls[0].endswith("meta2-20251221.json")
+    assert urls[1].endswith("meta1-20251221.json")
+
+
+def test_fetch_10min_data_propagates_a_malformed_body(mock_session):
+    """A truncated body or an HTML error page must not read as a quiet day.
+
+    requests raises JSONDecodeError, which is a ValueError subclass, so it
+    would be swallowed by a broad except and served as yesterday's data.
+    """
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    broken = _http_response(200)
+    broken.json.side_effect = requests.exceptions.JSONDecodeError("boom", "", 0)
+    mock_session.get.side_effect = [broken, _http_response(200)]
+
+    with pytest.raises(requests.exceptions.JSONDecodeError):
+        client._fetch_10min_data_with_fallback()
+
+    # The previous day was never reached: this is a failure, not an absence.
+    assert mock_session.get.call_count == 1
+
+
+def test_fetch_10min_data_propagates_an_unexpected_document_shape(mock_session):
+    """A renamed field is a format change and must be reported as one.
+
+    Retrying it as a missing day would report a structural break as an absence
+    of data, which is the worst possible hint for whoever has to debug it from
+    a user's log excerpt.
+    """
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    renamed = {"data": {"data": {"rows": [["0-20000-0-11518", "T", "x", 1.0]]}}}
+    mock_session.get.return_value = _http_response(200, renamed)
+
+    with pytest.raises(ValueError, match="no data.data.values array"):
+        client._fetch_10min_data_with_fallback()
+
+    assert mock_session.get.call_count == 1
+
+
+def test_fetch_10min_data_refuses_a_measurement_past_the_bound(
+    mock_session, monkeypatch
+):
+    """A station quiet since yesterday must not be served as current.
+
+    The fallback covers a gap of about an hour. A station that stops reporting
+    leaves yesterday's file in place all day, and serving its last row would
+    feed a day old value into long term statistics stamped as fresh.
+    """
+    _freeze(monkeypatch, datetime(2025, 12, 21, 12, 0, tzinfo=UTC))
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.side_effect = [
+        _http_response(404),
+        _http_response(
+            200, _10min_payload("0-20000-0-11518", "2025-12-20T23:50:00Z", -1.5)
+        ),
+    ]
+
+    with pytest.raises(api.MeasurementUnusable, match="12 hours old"):
+        client._fetch_10min_data_with_fallback()
+
+
+def test_fetch_10min_data_warns_about_an_ageing_measurement(
+    mock_session, monkeypatch, caplog
+):
+    """Between the two thresholds the reading is served, but not silently."""
+    _freeze(monkeypatch, datetime(2025, 12, 21, 3, 0, tzinfo=UTC))
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.return_value = _http_response(
+        200, _10min_payload("0-20000-0-11518", "2025-12-20T23:50:00Z", -1.5)
+    )
+
+    with caplog.at_level("WARNING"):
+        data = client._fetch_10min_data_with_fallback()
+
+    assert data["temperature"] == -1.5
+    assert "3 hours old" in caplog.text
+
+
+def test_fetch_10min_data_serves_the_nightly_gap_without_a_warning(
+    mock_session, monkeypatch, caplog
+):
+    """The case the fallback exists for is normal operation, not a problem."""
+    _freeze(monkeypatch, datetime(2025, 12, 21, 0, 30, tzinfo=UTC))
+    client = api.ChmuApi("11518", "Praha-Ruzyne")
+    mock_session.get.side_effect = [
+        _http_response(404),
+        _http_response(
+            200, _10min_payload("0-20000-0-11518", "2025-12-20T23:50:00Z", -1.5)
+        ),
+    ]
+
+    with caplog.at_level("WARNING"):
+        assert client._fetch_10min_data_with_fallback()["temperature"] == -1.5
+
+    assert caplog.text == ""
