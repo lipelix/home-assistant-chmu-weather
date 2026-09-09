@@ -78,31 +78,49 @@ _RUN_FILE_RE = re.compile(r"ALADCZ1K4opendata_(\d{10})_([A-Z0-9_]+)\.grb\.bz2")
 RETRY_ATTEMPTS = 4
 RETRY_BACKOFF = timedelta(seconds=5)
 
+# Retries are only worth having if the build still gets to finish. GitHub kills
+# the job at timeout-minutes and a killed run publishes nothing at all, so the
+# waiting is bounded once for the whole process rather than once per URL: this
+# build makes about fifteen requests, and fifteen of them each willing to spend
+# their full attempt budget on a sick server would need hours. Past the deadline
+# a transport failure is reported instead of retried, which leaves the rest of
+# the job's time to decode and publish.
+RETRY_DEADLINE = timedelta(minutes=20)
+_STARTED = time.monotonic()
+
+# The server answers these by asking to be asked again, so they belong with the
+# transport failures rather than with the other 4xx: 408 is "you were too slow",
+# 425 is "too early", 429 is "not this often".
+RETRY_STATUS = frozenset({408, 425, 429})
+
 
 def _retryable(error: Exception) -> bool:
     """Is this failure worth another attempt?
 
-    A 4xx is the server answering rather than failing, so retrying only burns
-    the run's time - and load_stations needs a 404 back promptly so it can ask
-    for yesterday's metadata instead. Everything else reaching here is a
+    Any other 4xx is the server answering rather than failing, so retrying only
+    burns the run's time - and load_stations needs a 404 back promptly so it can
+    ask for yesterday's metadata instead. Everything else reaching here is a
     transport failure, which is exactly the transient case retries exist for.
     """
     if isinstance(error, urllib.error.HTTPError):
-        return error.code == 429 or error.code >= 500
+        return error.code in RETRY_STATUS or error.code >= 500
     return True
 
 
-def _get(url: str, timeout: int = 300) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-
+def _get(url: str, timeout: int = 120) -> bytes:
     for attempt in range(1, RETRY_ATTEMPTS + 1):
+        # Rebuilt per attempt: urllib's redirect handler records each hop on the
+        # Request it is given, and a reused one carries those hops into the next
+        # attempt until it trips the handler's own loop detector.
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 return response.read()
         # HTTPException covers a body that stops mid-download; these files are
         # tens of megabytes, so that is a real outcome and not an OSError.
         except (OSError, http.client.HTTPException) as error:
-            if attempt == RETRY_ATTEMPTS or not _retryable(error):
+            out_of_time = time.monotonic() - _STARTED > RETRY_DEADLINE.total_seconds()
+            if attempt == RETRY_ATTEMPTS or out_of_time or not _retryable(error):
                 raise
             delay = RETRY_BACKOFF * attempt
             print(
@@ -138,7 +156,10 @@ def load_stations(limit: int | None = None) -> list[dict[str, Any]]:
         day = (datetime.now(UTC) - timedelta(days=delta)).strftime("%Y%m%d")
         try:
             payload = json.loads(_get(f"{STATION_METADATA}/meta1-{day}.json", 60))
-        except OSError:
+        # Same pair as _get retries on: a truncated body is not an OSError, and
+        # today's metadata failing for any transport reason is exactly when
+        # yesterday's is worth asking for.
+        except (OSError, http.client.HTTPException):
             continue
         # header: WSI, GH_ID, FULL_NAME, GEOGR1 (lon), GEOGR2 (lat), ELEVATION, ...
         # The metadata occasionally repeats a station verbatim, so key by WSI.

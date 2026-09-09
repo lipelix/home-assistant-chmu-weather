@@ -32,9 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     # The whole job takes about a minute; GitHub's default would let a hung
     # download sit on the concurrency group for six hours, i.e. a whole model
-    # cycle. The headroom is for the retries in build_forecast_data.py: a
-    # download that keeps timing out rather than failing outright can now spend
-    # four socket timeouts on one file before giving up.
+    # cycle. The headroom is for the retries in build_forecast_data.py, which
+    # stop retrying 20 minutes into the run for exactly this reason: a job
+    # killed here publishes nothing, so the retrying has to leave enough of
+    # this budget to decode and upload what it did manage to download.
     timeout-minutes: 30
     environment:
       name: github-pages
