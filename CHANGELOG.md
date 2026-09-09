@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.6.0] - 2026-09-09
+
+### Added
+- A measurement is only served while it is fresh enough to mean anything: one
+  more than 2 hours old logs a warning, and one more than 6 hours old is
+  refused, so the sensors go unavailable rather than presenting a stale reading
+  as current. A station that stops reporting used to leave its last value
+  standing all day
+- `measured_at` attribute on every measurement sensor, carrying the time ČHMÚ
+  measured the value. A sensor state is stamped with the time of the poll, so
+  this is the only place the real age is visible
 
 ### Fixed
 - Measurements no longer disappear for the first hours of the day (#5). ČHMÚ
@@ -22,16 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A malformed response body or a change to ČHMÚ's document shape is reported
   as itself instead of being retried as a missing day and served as yesterday's
   data
-
-### Added
-- A measurement is only served while it is fresh enough to mean anything: one
-  more than 2 hours old logs a warning, and one more than 6 hours old is
-  refused, so the sensors go unavailable rather than presenting a stale reading
-  as current. A station that stops reporting used to leave its last value
-  standing all day
-- `measured_at` attribute on every measurement sensor, carrying the time ČHMÚ
-  measured the value. A sensor state is stamped with the time of the poll, so
-  this is the only place the real age is visible
 
 ## [1.5.0] - 2026-09-08
 
