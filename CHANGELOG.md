@@ -13,8 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   each of them exactly once, so a single TCP timeout failed the job and left
   the published forecast on the previous run until the next scheduled slot -
   which GitHub delays by up to five hours on top of the six hour interval.
-  Downloads now retry four times with a growing backoff. A 404 is still
-  answered immediately, so the station metadata fallback keeps working
+  A failed download is now attempted three more times with a growing backoff,
+  and the retrying is bounded so it cannot eat the time the job needs to
+  publish. A refusal such as 404 still comes straight back, so the station
+  metadata fallback keeps working; 408, 425 and 429 are the server asking to be
+  asked again, so they are retried like any other transport failure
 
 ## [1.6.0] - 2026-09-09
 
