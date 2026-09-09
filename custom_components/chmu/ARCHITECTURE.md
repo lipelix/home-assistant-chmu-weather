@@ -91,6 +91,12 @@ table is hardcoded in the integration. Two families of stations are offered:
 
 `api.station_id_to_wsi()` / `api.wsi_to_station_id()` convert between the two.
 
+**Every published file is named after the UTC day**, and the timestamps inside
+carry a `Z`. A ČHMÚ file name is therefore never derived from the host's local
+date — on a Prague host the local day rolls over one or two hours before the
+UTC day, so a local-dated name asks for a file that does not exist yet. See
+`api._utc_day_candidates()`.
+
 **Metadata files**
 
 | File | Content | Used for |
@@ -162,12 +168,20 @@ decided by temperature.
 **Base URL:** `https://opendata.chmi.cz/meteorology/climate`
 
 **Endpoints:**
-- Daily data: `/now/data/YYYY-MM-DD.json`
-- Hourly data: `/recent/data/1hour/dly-1-YYMMDD-HHMM-{station_id}.json`
+- 10-minute data: `/now/data/10m-{WSI}-{YYYYMMDD}.json` (one file per station
+  per UTC day, rewritten hourly at about `HH:02` UTC)
+- Station metadata: `/now/metadata/meta1-{YYYYMMDD}.json`, `meta2-{YYYYMMDD}.json`
+  (published at about `00:02` UTC on the day they are named after)
 
 **Polling Strategy:**
-1. Try today's daily data
-2. Fallback to recent hourly data
+1. Try the current UTC day's file
+2. Fall back to the previous UTC day — a new day's first chunk does not appear
+   until about `01:02` UTC, so for the first hour of every UTC day only the
+   previous file exists
+3. Bound the result's age with `MEASUREMENT_STALE_AFTER` (warn) and
+   `MEASUREMENT_UNUSABLE_AFTER` (refuse), so a station that has gone quiet
+   cannot be served as a current reading. The measurement time is exposed as
+   the `measured_at` attribute on every sensor
 3. Try last 6 hours of data
 4. Use simulated data if all fail (development mode)
 

@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Measurements no longer disappear for the first hours of the day (#5). ČHMÚ
+  names the 10 minute data file after the UTC day and publishes a new day's
+  first chunk only at about 01:02 UTC, while the integration asked for the
+  file named after the host's *local* day - so from local midnight until
+  03:02 CEST (02:02 CET) every poll 404'd. The file name now follows the UTC
+  day and falls back to the previous one, so the sensors keep the last real
+  measurement and a restart inside that window no longer leaves the
+  integration unloaded
+- Station metadata is likewise requested for the UTC day rather than the local
+  one, so adding or reconfiguring a station in that window no longer needs a
+  second request to succeed
+- A malformed response body or a change to ČHMÚ's document shape is reported
+  as itself instead of being retried as a missing day and served as yesterday's
+  data
+
+### Added
+- A measurement is only served while it is fresh enough to mean anything: one
+  more than 2 hours old logs a warning, and one more than 6 hours old is
+  refused, so the sensors go unavailable rather than presenting a stale reading
+  as current. A station that stops reporting used to leave its last value
+  standing all day
+- `measured_at` attribute on every measurement sensor, carrying the time ČHMÚ
+  measured the value. A sensor state is stamped with the time of the poll, so
+  this is the only place the real age is visible
+
 ## [1.5.0] - 2026-09-08
 
 ### Added

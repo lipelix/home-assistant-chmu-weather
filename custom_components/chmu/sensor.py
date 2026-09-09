@@ -82,6 +82,21 @@ class ChmuSensorBase(CoordinatorEntity, SensorEntity):
             "suggested_area": "Outdoors",
         }
 
+    @property
+    def extra_state_attributes(self):
+        """Expose when the value was measured, not when it was written.
+
+        Home Assistant stamps a state with the time the poll wrote it, which
+        for a polled sensor is not when the measurement was taken. During the
+        nightly publishing gap the reading legitimately comes from the previous
+        UTC day, so the real time has to be visible somewhere.
+        """
+        if not self.coordinator.data:
+            return None
+
+        measured_at = self.coordinator.data.get("timestamp")
+        return {"measured_at": measured_at} if measured_at else None
+
 
 class ChmuTemperatureSensor(ChmuSensorBase):
     """Temperature sensor."""

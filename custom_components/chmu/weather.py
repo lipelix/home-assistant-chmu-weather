@@ -123,10 +123,10 @@ class ChmuWeather(CoordinatorEntity, WeatherEntity):
     def available(self) -> bool:
         """Return whether either source has something to report.
 
-        The two feeds fail independently: ČHMÚ stops publishing a station's
-        10 minute file for a while after local midnight, which must not take
-        the forecast down with it - an unavailable entity makes
-        weather.get_forecasts raise for anything that calls it.
+        The two feeds fail independently: ČHMÚ can stop publishing a
+        station's 10 minute file, which must not take the forecast down with
+        it - an unavailable entity makes weather.get_forecasts raise for
+        anything that calls it.
         """
         return bool(self._measured) or self._forecast is not None
 
