@@ -76,14 +76,19 @@ class ChmuWeather(CoordinatorEntity, WeatherEntity):
 
     @property
     def device_info(self):
-        """Return device information, shared with this station's sensors."""
+        """Return device information, shared with this station's sensors.
+
+        No suggested_area: an area name is stored verbatim and cannot be
+        translated, so suggesting one puts an English word in front of every
+        Czech user and prefixes the entity ids with it. Where the station is
+        belongs to whoever installed it.
+        """
         return {
             "identifiers": {(DOMAIN, self._station_id)},
             "name": self._station_name,
             "manufacturer": "ČHMÚ",
             "model": f"Weather Station {self._station_id}",
             "configuration_url": "https://opendata.chmi.cz",
-            "suggested_area": "Outdoors",
         }
 
     async def async_added_to_hass(self) -> None:
