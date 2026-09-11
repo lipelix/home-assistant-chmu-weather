@@ -70,10 +70,10 @@ TEMPERATURE_SLEET_BELOW = 2.0
 # Solar elevation in degrees at sunset, including refraction and solar radius.
 SUNSET_ELEVATION = -0.833
 
-# Local hour from which a day's hourly rows count as covering its afternoon,
-# used when the published 12 hour maximum for that day is missing. The daily
-# maximum falls in the early afternoon at this latitude in every season.
-DAILY_HIGH_FROM_HOUR = 15
+# Local hour a day's hourly rows have to span from both sides before they can
+# stand in for a missing published 12 hour maximum. The daily maximum falls in
+# the early afternoon at this latitude in every season.
+DAILY_HIGH_HOUR = 15
 
 _HOURLY_KEYS = {
     "temperature": "native_temperature",
@@ -277,18 +277,21 @@ def _hourly_entries(
     return entries
 
 
-def _reaches_the_afternoon(hours: list[dict[str, Any]]) -> bool:
-    """Return whether a day's hourly rows run into its afternoon.
+def _spans_the_afternoon(hours: list[dict[str, Any]]) -> bool:
+    """Return whether a day's hourly rows cover its afternoon from both sides.
 
-    A daily high is an afternoon number. The tail of a run often covers only
-    the small hours of the day it ends on, and the warmest of those is not that
-    day's maximum, so hours that stop before the afternoon are no substitute
-    for a missing published one.
+    A daily high is an afternoon number, so the rows can only stand in for a
+    missing published maximum when the afternoon falls inside them rather than
+    at one end. Both ends matter and for different reasons: the tail of a run
+    covers only the small hours of the day it ends on, and today's rows are a
+    suffix starting at the current hour, so an evening poll is left with hours
+    that have already cooled - reporting one of those as the day's high puts a
+    number below that day's own overnight low on the forecast tile.
     """
-    return any(
-        hour["_valid_time"].astimezone(LOCAL_TIMEZONE).hour >= DAILY_HIGH_FROM_HOUR
-        for hour in hours
-    )
+    local_hours = [
+        hour["_valid_time"].astimezone(LOCAL_TIMEZONE).hour for hour in hours
+    ]
+    return bool(local_hours) and min(local_hours) <= DAILY_HIGH_HOUR <= max(local_hours)
 
 
 def _daily_entries(
@@ -315,14 +318,14 @@ def _daily_entries(
         # The published extremes are true 12 hour model fields, so they are
         # used whenever they are there. They are also the part of a run most
         # likely to be missing - the last day a run reaches usually has the
-        # overnight low but not the following afternoon's high, and a run whose
-        # 12 hour maximum did not decode has none at all - so the hourly rows
-        # stand in for them rather than the day being dropped. A day list that
-        # comes back empty leaves Home Assistant's daily forecast tab spinning
-        # forever, because core reports "no forecast" and "not fetched yet" the
-        # same way.
+        # overnight low but not the following afternoon's high, and a partly
+        # decoded maximum leaves whole days without one - so the hourly rows
+        # stand in for them rather than the day being dropped. Dropping every
+        # day is what has to be avoided: Home Assistant reports "no forecast"
+        # and "not fetched yet" the same way, and its frontend renders both as
+        # a forecast tab that spins forever.
         high = row.get("temperature")
-        if high is None and _reaches_the_afternoon(hours):
+        if high is None and _spans_the_afternoon(hours):
             high = max(
                 (
                     hour["native_temperature"]

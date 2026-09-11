@@ -10,12 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The daily forecast tab no longer spins forever when a model run arrives
   without its 12 hour maxima. A day with no published high used to be dropped,
-  so a run that lost that one field left no days at all - and Home Assistant
+  so a run missing that one field left no days at all - and Home Assistant
   reports an empty forecast the same way it reports one that has not been
   fetched yet, which the frontend renders as a spinner that never resolves.
-  A missing high is now taken from the day's own hourly rows, provided they
-  reach into the afternoon; the published 12 hour value is still preferred
-  wherever the run carries it
+  A missing high is now taken from the day's own hourly rows; the published
+  12 hour value is still preferred wherever the run carries it. The fallback
+  only applies where the hourly rows cover the afternoon from both sides, so
+  the current day is not given the temperature of whatever evening hour
+  happens to be left - a number that can land below that day's own overnight
+  low and draw an inverted tile
 
 ### Changed
 - Stations no longer suggest an "Outdoors" area. An area name is stored
