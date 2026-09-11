@@ -382,10 +382,10 @@ def test_daylight_for_the_daily_cloud_cover_follows_the_sun():
     assert tomorrow["condition"] == "sunny"
 
 
-def test_a_day_without_a_high_is_dropped():
+def test_a_day_without_a_high_or_afternoon_hours_is_dropped():
     # The 12 hour extremes mean the last day a run reaches often has only the
-    # overnight low. A tile with no temperature renders empty in Home
-    # Assistant, and its hours cover only part of the day.
+    # overnight low, and the run does not reach that day's afternoon either, so
+    # there is nothing to stand in for the missing high.
     document = _document(
         daily=[
             {"date": "2026-09-08", "temperature": 28.8, "templow": 11.5},
@@ -401,6 +401,43 @@ def test_a_day_without_a_high_is_dropped():
         "2026-09-09",
     ]
     assert all("native_temperature" in day for day in parsed.daily)
+
+
+def test_a_missing_published_high_falls_back_to_the_hourly_rows():
+    # A run whose 12 hour maximum did not decode publishes days with a low and
+    # no high, and every one of them used to be dropped - which empties the day
+    # list and leaves Home Assistant's daily tab spinning forever.
+    hours = [_hour(offset) for offset in range(31)]
+    hours[20] = _hour(20, temperature=26.5)  # 10:00 local on the 9th
+    hours[27] = _hour(27, temperature=14.0)  # 17:00 local on the 9th
+    document = _document(
+        hourly=hours,
+        daily=[
+            {"date": "2026-09-08", "temperature": 28.8, "templow": 11.5},
+            {"date": "2026-09-09", "templow": 12.0},
+        ],
+    )
+
+    parsed = fc.parse_forecast(document, NOW)
+
+    ninth = parsed.daily[1]
+    assert ninth["datetime"][:10] == "2026-09-09"
+    assert ninth["native_temperature"] == 26.5
+    assert ninth["native_templow"] == 12.0
+    # A published high is the better number and still wins where there is one.
+    assert parsed.daily[0]["native_temperature"] == 28.8
+
+
+def test_a_run_with_no_published_days_still_reports_days():
+    document = _document(hourly=[_hour(offset) for offset in range(31)], daily=[])
+
+    parsed = fc.parse_forecast(document, NOW)
+
+    assert [day["datetime"][:10] for day in parsed.daily] == [
+        "2026-09-08",
+        "2026-09-09",
+    ]
+    assert all(day["native_temperature"] == 20.0 for day in parsed.daily)
 
 
 def test_a_day_without_an_overnight_low_is_still_reported():
