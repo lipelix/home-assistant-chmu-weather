@@ -79,7 +79,6 @@ class ChmuSensorBase(CoordinatorEntity, SensorEntity):
             "manufacturer": "ČHMÚ",
             "model": f"Weather Station {self._station_id}",
             "configuration_url": "https://opendata.chmi.cz",
-            "suggested_area": "Outdoors",
         }
 
     @property
