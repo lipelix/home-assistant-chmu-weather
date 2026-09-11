@@ -70,6 +70,11 @@ TEMPERATURE_SLEET_BELOW = 2.0
 # Solar elevation in degrees at sunset, including refraction and solar radius.
 SUNSET_ELEVATION = -0.833
 
+# Local hour from which a day's hourly rows count as covering its afternoon,
+# used when the published 12 hour maximum for that day is missing. The daily
+# maximum falls in the early afternoon at this latitude in every season.
+DAILY_HIGH_FROM_HOUR = 15
+
 _HOURLY_KEYS = {
     "temperature": "native_temperature",
     "humidity": "humidity",
@@ -272,6 +277,20 @@ def _hourly_entries(
     return entries
 
 
+def _reaches_the_afternoon(hours: list[dict[str, Any]]) -> bool:
+    """Return whether a day's hourly rows run into its afternoon.
+
+    A daily high is an afternoon number. The tail of a run often covers only
+    the small hours of the day it ends on, and the warmest of those is not that
+    day's maximum, so hours that stop before the afternoon are no substitute
+    for a missing published one.
+    """
+    return any(
+        hour["_valid_time"].astimezone(LOCAL_TIMEZONE).hour >= DAILY_HIGH_FROM_HOUR
+        for hour in hours
+    )
+
+
 def _daily_entries(
     document: dict[str, Any], hourly: list[dict[str, Any]], now: datetime
 ) -> list[dict[str, Any]]:
@@ -283,22 +302,38 @@ def _daily_entries(
 
     today = now.astimezone(LOCAL_TIMEZONE).date().isoformat()
 
+    published = {row["date"]: row for row in document.get("daily") or []}
+
     entries = []
-    for row in document.get("daily") or []:
-        date = row["date"]
+    for date in sorted(published.keys() | by_date.keys()):
         if date < today:
             continue
 
-        # The extremes are 12 hour fields, so the last day a run reaches often
-        # has the overnight low but not the following afternoon's high. A tile
-        # with no high renders as an empty temperature in Home Assistant, and
-        # the hours behind it cover only part of the day, so drop the day
-        # instead of publishing a half one.
+        row = published.get(date, {})
+        hours = by_date.get(date, [])
+
+        # The published extremes are true 12 hour model fields, so they are
+        # used whenever they are there. They are also the part of a run most
+        # likely to be missing - the last day a run reaches usually has the
+        # overnight low but not the following afternoon's high, and a run whose
+        # 12 hour maximum did not decode has none at all - so the hourly rows
+        # stand in for them rather than the day being dropped. A day list that
+        # comes back empty leaves Home Assistant's daily forecast tab spinning
+        # forever, because core reports "no forecast" and "not fetched yet" the
+        # same way.
         high = row.get("temperature")
+        if high is None and _reaches_the_afternoon(hours):
+            high = max(
+                (
+                    hour["native_temperature"]
+                    for hour in hours
+                    if "native_temperature" in hour
+                ),
+                default=None,
+            )
         if high is None:
             continue
 
-        hours = by_date.get(date, [])
         midnight = datetime.fromisoformat(date).replace(tzinfo=LOCAL_TIMEZONE)
         entry: dict[str, Any] = {
             "datetime": midnight.isoformat(),
