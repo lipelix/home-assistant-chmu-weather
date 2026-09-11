@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- The daily forecast tab no longer spins forever when a model run arrives
+  without its 12 hour maxima. A day with no published high used to be dropped,
+  so a run that lost that one field left no days at all - and Home Assistant
+  reports an empty forecast the same way it reports one that has not been
+  fetched yet, which the frontend renders as a spinner that never resolves.
+  A missing high is now taken from the day's own hourly rows, provided they
+  reach into the afternoon; the published 12 hour value is still preferred
+  wherever the run carries it
+
+### Changed
+- Stations no longer suggest an "Outdoors" area. An area name is stored
+  verbatim and cannot be translated, so it put an English word above every
+  entity and in front of every entity id (`sensor.outdoors_plzen_mikulka_*`)
+  regardless of the configured language. Existing installations keep the area
+  they already have; it can be renamed or cleared in Settings → Areas
+
 ## [1.6.1] - 2026-09-09
 
 ### Fixed
