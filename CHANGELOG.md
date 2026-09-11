@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.0] - 2026-09-11
 
 ### Fixed
 - The daily forecast tab no longer spins forever when a model run arrives
@@ -23,9 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Stations no longer suggest an "Outdoors" area. An area name is stored
   verbatim and cannot be translated, so it put an English word above every
-  entity and in front of every entity id (`sensor.outdoors_plzen_mikulka_*`)
-  regardless of the configured language. Existing installations keep the area
-  they already have; it can be renamed or cleared in Settings → Areas
+  entity regardless of the configured language - and from Home Assistant
+  2026.9, which builds entity ids from the area as well, in front of every
+  entity id too (`weather.outdoors_plzen_mikulka`). `suggested_area` is also
+  deprecated in Home Assistant as of 2026.9. Existing installations keep the
+  area they already have; it can be renamed or cleared in Settings → Areas
 
 ## [1.6.1] - 2026-09-09
 
