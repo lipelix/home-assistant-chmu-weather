@@ -440,6 +440,61 @@ def test_a_run_with_no_published_days_still_reports_days():
     assert all(day["native_temperature"] == 20.0 for day in parsed.daily)
 
 
+def test_an_evening_poll_does_not_report_a_cooled_hour_as_the_days_high():
+    # Today's rows are a suffix starting at the current hour, so by the evening
+    # the warmest one left is well below that day's real maximum - and often
+    # below its own published overnight low, which draws an inverted tile.
+    evening = NOW + timedelta(hours=8)  # 22:00 local on the 8th
+    hours = [
+        _hour(offset, temperature=28.0 if offset == 0 else 13.0) for offset in range(12)
+    ]
+    document = _document(
+        hourly=hours,
+        daily=[
+            {"date": "2026-09-08", "templow": 16.0},
+            {"date": "2026-09-09", "temperature": 21.0},
+        ],
+    )
+
+    parsed = fc.parse_forecast(document, evening)
+
+    assert [day["datetime"][:10] for day in parsed.daily] == ["2026-09-09"]
+
+
+@pytest.mark.parametrize(
+    ("last_offset", "reported"),
+    [
+        (24, False),  # the 9th's rows stop at 14:00 local, short of the afternoon
+        (25, True),  # they reach 15:00 local
+    ],
+)
+def test_the_fallback_needs_the_afternoon_inside_the_hourly_rows(last_offset, reported):
+    document = _document(
+        hourly=[_hour(offset) for offset in range(10, last_offset + 1)],
+        daily=[
+            {"date": "2026-09-08", "temperature": 28.8},
+            {"date": "2026-09-09", "templow": 12.0},
+        ],
+    )
+
+    parsed = fc.parse_forecast(document, NOW)
+
+    dates = [day["datetime"][:10] for day in parsed.daily]
+    assert ("2026-09-09" in dates) is reported
+
+
+@pytest.mark.parametrize("elapsed", range(0, 48, 3))
+def test_a_run_without_published_days_keeps_a_day_to_show_all_the_way_through(elapsed):
+    # The whole point of the fallback: an empty day list is indistinguishable
+    # from a forecast that has not been fetched yet, and Home Assistant renders
+    # both as a spinner that never resolves.
+    document = _document(hourly=[_hour(offset) for offset in range(73)], daily=[])
+
+    parsed = fc.parse_forecast(document, NOW + timedelta(hours=elapsed))
+
+    assert parsed.daily
+
+
 def test_a_day_without_an_overnight_low_is_still_reported():
     # The first day of a run is the mirror image: it has the afternoon high but
     # the overnight low already belongs to the previous run.
