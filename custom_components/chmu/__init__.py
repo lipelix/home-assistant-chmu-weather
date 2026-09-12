@@ -25,6 +25,12 @@ SCAN_INTERVAL = timedelta(minutes=10)
 # keeps the lag after a new run short.
 FORECAST_SCAN_INTERVAL = timedelta(hours=1)
 
+# While there is no forecast at all, the hourly cadence is far too slow: the
+# weather card's Daily tab shows a spinner for as long as the coordinator holds
+# no data, so a download that fails at startup leaves it spinning for a full
+# hour. Retry quickly until something lands, then drop back to hourly.
+FORECAST_RETRY_INTERVAL = timedelta(minutes=5)
+
 
 @dataclass
 class ChmuRuntimeData:
@@ -63,6 +69,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
 
+    def _pace_forecast_polling(have_forecast: bool) -> None:
+        """Poll often while there is nothing to serve, hourly once there is.
+
+        Nothing to serve means the Daily tab is showing a spinner, and the user
+        has no way to ask for a retry, so waiting out the publication cadence is
+        the wrong trade there.
+        """
+        wanted = FORECAST_SCAN_INTERVAL if have_forecast else FORECAST_RETRY_INTERVAL
+        if forecast_coordinator.update_interval != wanted:
+            forecast_coordinator.update_interval = wanted
+
     async def async_update_forecast():
         """Fetch the per-station forecast.
 
@@ -77,16 +94,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
         unaffected.
         """
         try:
-            return await hass.async_add_executor_job(forecast_api.get_forecast)
+            forecast = await hass.async_add_executor_job(forecast_api.get_forecast)
         except ForecastUnusable as err:
             _LOGGER.warning(
                 "No usable ČHMÚ forecast for station %s: %s", station_id, err
             )
+            _pace_forecast_polling(False)
             return None
         except Exception as err:
+            # A failed fetch leaves the coordinator's existing data in place, so
+            # whether this leaves the card empty depends on what is already there.
+            _pace_forecast_polling(forecast_coordinator.data is not None)
             raise UpdateFailed(
                 f"Could not fetch the ČHMÚ forecast for station {station_id}: {err}"
             ) from err
+
+        _pace_forecast_polling(True)
+        return forecast
 
     coordinator = DataUpdateCoordinator(
         hass,

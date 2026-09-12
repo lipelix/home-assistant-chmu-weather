@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- A forecast download that fails is now retried within minutes instead of at
+  the next hourly poll, for as long as there is no forecast to show. The first
+  download runs as a background task so it cannot hold up startup, and when it
+  failed there was nothing to serve until the hour was up - which the frontend
+  renders as a Daily tab spinning for that entire hour. Once a forecast has
+  landed the interval drops back to hourly, and a failure that leaves a usable
+  forecast in place keeps polling hourly too: there is no reason to poll harder
+  than the publisher when the card already has something to draw
+
 ## [1.7.0] - 2026-09-11
 
 ### Fixed
