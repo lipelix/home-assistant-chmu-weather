@@ -29,6 +29,10 @@ from pytest_homeassistant_custom_component.common import (  # noqa: E402
     MockConfigEntry,
 )
 
+from custom_components.chmu import (  # noqa: E402
+    FORECAST_RETRY_INTERVAL,
+    FORECAST_SCAN_INTERVAL,
+)
 from custom_components.chmu.const import DOMAIN  # noqa: E402
 from custom_components.chmu.forecast import LOCAL_TIMEZONE  # noqa: E402
 
@@ -333,6 +337,8 @@ async def test_a_transient_forecast_failure_keeps_the_last_forecast(hass, setup_
     # The coordinator knows it failed, but the data it already had survives.
     assert coordinator.last_update_success is False
     assert coordinator.data is not None
+    # Still something to show, so no reason to poll harder than the publisher.
+    assert coordinator.update_interval == FORECAST_SCAN_INTERVAL
     assert state.state == "sunny"
     assert len(result["weather.plzen_mikulka"]["forecast"]) == 3
     # And the measured side is untouched either way.
@@ -361,6 +367,50 @@ async def test_a_forecast_too_old_to_use_is_dropped(hass, setup_entry):
     assert coordinator.data is None
     assert state.state == "unknown"
     assert state.attributes["temperature"] == 21.3
+    # Nothing to serve means a spinning Daily tab, so ask again soon.
+    assert coordinator.update_interval == FORECAST_RETRY_INTERVAL
+
+
+async def test_a_forecast_failing_at_startup_is_retried_within_minutes(
+    hass, measured_response
+):
+    """A download that fails at startup must not leave the card spinning an hour.
+
+    With no forecast the Daily tab shows a spinner and offers the user no way to
+    ask again, so the hourly publication cadence is the wrong thing to wait for.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Plzeň, Mikulka",
+        data={"station_id": "11450", "station_name": "Plzeň, Mikulka"},
+    )
+    entry.add_to_hass(hass)
+
+    with patch("requests.Session.get", side_effect=OSError("boom")):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    coordinator = entry.runtime_data.forecast_coordinator
+
+    # The measured side came up regardless - the two feeds fail independently.
+    assert coordinator.data is None
+    assert coordinator.update_interval == FORECAST_RETRY_INTERVAL
+    assert hass.states.get("sensor.plzen_mikulka_temperature").state == "21.3"
+
+    # And once a forecast lands there is nothing left to hurry for.
+    response = MagicMock()
+    response.status_code = 200
+    response.headers = {"ETag": 'W/"recovered"'}
+    response.raise_for_status.return_value = None
+    response.json.return_value = _published_document(RUN)
+
+    with patch("requests.Session.get", return_value=response):
+        await coordinator.async_refresh()
+        await hass.async_block_till_done()
+
+    assert coordinator.data is not None
+    assert coordinator.update_interval == FORECAST_SCAN_INTERVAL
+    assert hass.states.get("weather.plzen_mikulka").state == "sunny"
 
 
 async def test_a_measurement_outage_leaves_the_forecast_usable(
