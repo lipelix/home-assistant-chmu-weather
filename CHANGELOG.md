@@ -8,14 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- A forecast download that fails is now retried within minutes instead of at
-  the next hourly poll, for as long as there is no forecast to show. The first
+- A forecast download that fails outright is now retried within minutes instead
+  of at the next hourly poll, as long as it left nothing to show. The first
   download runs as a background task so it cannot hold up startup, and when it
   failed there was nothing to serve until the hour was up - which the frontend
-  renders as a Daily tab spinning for that entire hour. Once a forecast has
-  landed the interval drops back to hourly, and a failure that leaves a usable
-  forecast in place keeps polling hourly too: there is no reason to poll harder
-  than the publisher when the card already has something to draw
+  renders as a Daily tab spinning for that entire hour. Once a forecast lands
+  the interval drops back to hourly, and a failure that leaves a usable forecast
+  in place keeps polling hourly too: there is no reason to poll harder than the
+  publisher when the card already has something to draw.
+
+  Only a download that did not work is hurried. A forecast that arrives too old
+  to use stays on the hourly cadence, because the download did work: until the
+  publisher regenerates the file an unchanged one answers 304 and the same
+  cached bytes are replayed, so a sooner request would re-parse a document
+  already known to be unusable, twelve times an hour, without being able to
+  recover any earlier than the hourly poll would
 
 ## [1.7.0] - 2026-09-11
 

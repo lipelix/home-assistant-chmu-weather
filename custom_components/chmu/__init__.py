@@ -25,10 +25,11 @@ SCAN_INTERVAL = timedelta(minutes=10)
 # keeps the lag after a new run short.
 FORECAST_SCAN_INTERVAL = timedelta(hours=1)
 
-# While there is no forecast at all, the hourly cadence is far too slow: the
-# weather card's Daily tab shows a spinner for as long as the coordinator holds
-# no data, so a download that fails at startup leaves it spinning for a full
-# hour. Retry quickly until something lands, then drop back to hourly.
+# A download that fails outright is worth retrying long before the next hour is
+# up: with no forecast the weather card's Daily tab shows a spinner and offers
+# no way to ask again, so a failure at startup leaves it spinning for the whole
+# hour. This applies only to a download that did not work - see
+# _pace_forecast_polling for why a successful one is never hurried.
 FORECAST_RETRY_INTERVAL = timedelta(minutes=5)
 
 
@@ -69,14 +70,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
 
-    def _pace_forecast_polling(have_forecast: bool) -> None:
-        """Poll often while there is nothing to serve, hourly once there is.
+    def _pace_forecast_polling(retry_soon: bool) -> None:
+        """Retry within minutes after a download that failed leaving nothing.
 
-        Nothing to serve means the Daily tab is showing a spinner, and the user
-        has no way to ask for a retry, so waiting out the publication cadence is
-        the wrong trade there.
+        Only a download that did not work is worth hurrying. Whatever the site
+        did return cannot change before the publisher regenerates the file, and
+        until it does an unchanged file answers 304 and _fetch replays the very
+        same cached bytes - so asking again sooner would re-parse a document
+        already known to be unusable, 12 times an hour, for as long as the
+        condition lasts. A new run is picked up within the hour either way.
         """
-        wanted = FORECAST_SCAN_INTERVAL if have_forecast else FORECAST_RETRY_INTERVAL
+        wanted = FORECAST_RETRY_INTERVAL if retry_soon else FORECAST_SCAN_INTERVAL
         if forecast_coordinator.update_interval != wanted:
             forecast_coordinator.update_interval = wanted
 
@@ -99,17 +103,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
             _LOGGER.warning(
                 "No usable ČHMÚ forecast for station %s: %s", station_id, err
             )
+            # The download worked, so there is nothing a sooner one would find.
             _pace_forecast_polling(False)
             return None
         except Exception as err:
             # A failed fetch leaves the coordinator's existing data in place, so
             # whether this leaves the card empty depends on what is already there.
-            _pace_forecast_polling(forecast_coordinator.data is not None)
+            _pace_forecast_polling(forecast_coordinator.data is None)
             raise UpdateFailed(
                 f"Could not fetch the ČHMÚ forecast for station {station_id}: {err}"
             ) from err
 
-        _pace_forecast_polling(True)
+        _pace_forecast_polling(False)
         return forecast
 
     coordinator = DataUpdateCoordinator(

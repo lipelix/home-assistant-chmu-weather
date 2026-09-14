@@ -27,6 +27,7 @@ pytest.importorskip(
 
 from pytest_homeassistant_custom_component.common import (  # noqa: E402
     MockConfigEntry,
+    async_fire_time_changed,
 )
 
 from custom_components.chmu import (  # noqa: E402
@@ -367,12 +368,14 @@ async def test_a_forecast_too_old_to_use_is_dropped(hass, setup_entry):
     assert coordinator.data is None
     assert state.state == "unknown"
     assert state.attributes["temperature"] == 21.3
-    # Nothing to serve means a spinning Daily tab, so ask again soon.
-    assert coordinator.update_interval == FORECAST_RETRY_INTERVAL
+    # The download itself worked, and until the publisher regenerates the file
+    # an unchanged one answers 304 with the same bytes, so asking again sooner
+    # would only re-parse a document already known to be unusable.
+    assert coordinator.update_interval == FORECAST_SCAN_INTERVAL
 
 
 async def test_a_forecast_failing_at_startup_is_retried_within_minutes(
-    hass, measured_response
+    hass, measured_response, freezer
 ):
     """A download that fails at startup must not leave the card spinning an hour.
 
@@ -397,20 +400,48 @@ async def test_a_forecast_failing_at_startup_is_retried_within_minutes(
     assert coordinator.update_interval == FORECAST_RETRY_INTERVAL
     assert hass.states.get("sensor.plzen_mikulka_temperature").state == "21.3"
 
-    # And once a forecast lands there is nothing left to hurry for.
+    # The retry then has to actually fire. Nothing here calls async_refresh:
+    # the coordinator's own scheduled callback does the work, which is the part
+    # that would quietly stop happening if the pacing moved out of the update
+    # method - the update_interval setter only stores the value, the rescheduling
+    # is done by the refresh itself.
     response = MagicMock()
     response.status_code = 200
     response.headers = {"ETag": 'W/"recovered"'}
     response.raise_for_status.return_value = None
     response.json.return_value = _published_document(RUN)
 
+    later = FROZEN_NOW + FORECAST_RETRY_INTERVAL + timedelta(seconds=30)
+    freezer.move_to(later)
     with patch("requests.Session.get", return_value=response):
-        await coordinator.async_refresh()
-        await hass.async_block_till_done()
+        async_fire_time_changed(hass, later)
+        await hass.async_block_till_done(wait_background_tasks=True)
 
     assert coordinator.data is not None
-    assert coordinator.update_interval == FORECAST_SCAN_INTERVAL
     assert hass.states.get("weather.plzen_mikulka").state == "sunny"
+    # And once a forecast has landed there is nothing left to hurry for.
+    assert coordinator.update_interval == FORECAST_SCAN_INTERVAL
+
+
+async def test_a_landed_forecast_is_not_polled_every_five_minutes(
+    hass, setup_entry, forecast_response, freezer
+):
+    """The fast lane must not stay armed once there is something to draw.
+
+    The counterpart to the retry test above: same elapsed time, healthy
+    forecast, and the coordinator must stay quiet.
+    """
+    downloads = forecast_response.call_count
+
+    later = FROZEN_NOW + FORECAST_RETRY_INTERVAL + timedelta(seconds=30)
+    freezer.move_to(later)
+    async_fire_time_changed(hass, later)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    coordinator = setup_entry.runtime_data.forecast_coordinator
+
+    assert forecast_response.call_count == downloads
+    assert coordinator.update_interval == FORECAST_SCAN_INTERVAL
 
 
 async def test_a_measurement_outage_leaves_the_forecast_usable(
