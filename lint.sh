@@ -24,6 +24,18 @@ echo "🎨 Checking formatting..."
 $RUFF format --check .
 
 echo ""
+echo "🔎 Running pyright type check..."
+if [ -f ".venv/bin/pyright" ]; then
+    PYRIGHT=".venv/bin/pyright"
+elif command -v pyright &> /dev/null; then
+    PYRIGHT="pyright"
+else
+    echo "❌ pyright not found. Install it with: pip install -r requirements-dev.txt"
+    exit 1
+fi
+$PYRIGHT
+
+echo ""
 echo "🔍 Running HACS validation..."
 ./validate-hacs.sh
 

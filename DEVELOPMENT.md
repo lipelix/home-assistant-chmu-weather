@@ -22,7 +22,7 @@ This guide explains how to set up your local development environment and run che
 
 ## Linting
 
-This project uses [Ruff](https://github.com/astral-sh/ruff) for linting and formatting.
+This project uses [Ruff](https://github.com/astral-sh/ruff) for linting and formatting, and [Pyright](https://github.com/microsoft/pyright) for type checking.
 
 ### Automatic Linting (Pre-commit)
 
@@ -53,6 +53,18 @@ ruff format --check .
 ruff format .
 ```
 
+**Type checking:**
+```bash
+# Pyright reads pyrightconfig.json; a clean tree must report zero errors, so
+# any error it prints was introduced by the change under review.
+pyright
+```
+
+Pyright is pinned in `requirements-dev.txt`. New releases change what the Home
+Assistant type stubs report, which is how a clean tree once drifted from 1 to
+33 errors (issue #20); bump the pin deliberately and fix the fallout in the
+same commit. `pyrightconfig.json` documents the one rule that is switched off.
+
 **HACS Validation:**
 ```bash
 ./validate-hacs.sh
@@ -73,7 +85,7 @@ pre-commit run --all-files
 ## Development Workflow
 
 1. Make your changes
-2. Run `./lint.sh` to check for lint errors and HACS validation (or rely on pre-commit hooks for linting)
+2. Run `./lint.sh` to check for lint errors, type errors and HACS validation (or rely on pre-commit hooks for linting)
 3. Commit your changes (pre-commit will run automatically)
 4. Push to GitHub
 

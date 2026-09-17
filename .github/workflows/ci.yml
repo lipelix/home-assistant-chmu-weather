@@ -53,6 +53,26 @@ jobs:
       - name: Run pytest
         run: pytest
 
+  types:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        # Must match the tests job: pyright resolves Home Assistant's stubs
+        # from the same environment pytest runs in.
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Create the virtualenv pyrightconfig.json points at
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements-dev.txt
+      - name: Run pyright
+        # A clean tree must report zero errors, so any new one is a real
+        # signal - see the rule notes in pyrightconfig.json.
+        run: .venv/bin/pyright
+
   hassfest:
     name: Hassfest
     runs-on: ubuntu-latest

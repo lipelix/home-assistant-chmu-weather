@@ -1,0 +1,24 @@
+{
+  // Pyright is not run by CI's ruff job; it is the type-check gate (see
+  // .github/workflows/ci.yml). The settings below exist so a clean tree
+  // reports zero errors, which makes any new error a real signal.
+  "include": ["custom_components", "tests", "tools"],
+  "exclude": ["**/__pycache__", ".venv", "assets"],
+
+  // tests/ add tools/ to sys.path at runtime; pyright needs it spelled out.
+  "extraPaths": ["tools"],
+
+  "venvPath": ".",
+  "venv": ".venv",
+  // Home Assistant 2026.2 requires Python 3.13; type-check against what runs.
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "standard",
+
+  // Home Assistant declares entity properties (device_info, available,
+  // native_value, ...) as cached_property class attributes on Entity, while
+  // the documented integration pattern is to override them with a plain
+  // @property. Pyright flags every such override; HA's own core does not
+  // type-check with pyright. Suppressing this one rule keeps the remaining
+  // diagnostics meaningful instead of drowning them in ~30 false positives.
+  "reportIncompatibleVariableOverride": "none"
+}
