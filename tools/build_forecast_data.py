@@ -17,6 +17,11 @@ so that changing the mapping does not require regenerating the data.
 Usage:
     python tools/build_forecast_data.py --out dist
     python tools/build_forecast_data.py --out dist --limit 5   # quick check
+
+With --published-index the build first asks the site which run it is already
+serving and writes nothing when opendata has nothing newer, so the workflow can
+be scheduled far more often than ALADIN publishes without downloading the same
+run again.
 """
 
 from __future__ import annotations
@@ -150,6 +155,25 @@ def find_latest_run() -> str:
     return max(complete)
 
 
+def published_run(index_url: str) -> str | None:
+    """Return the run id (YYYYMMDDHH) the site already serves, or None.
+
+    None means "could not tell" - no index yet on a first deploy, or a bad
+    answer from Pages - and the caller then builds, because publishing a run
+    that is already published costs one wasted job while not publishing a new
+    one costs a whole model cycle.
+    """
+    try:
+        index = json.loads(_get(index_url, timeout=60))
+        run = index["run"].replace("Z", "+00:00")
+        return datetime.fromisoformat(run).astimezone(UTC).strftime("%Y%m%d%H")
+    # HTTPError is an OSError, and a malformed or truncated index raises the
+    # ValueError/KeyError pair; all of them mean the same thing here.
+    except (OSError, http.client.HTTPException, ValueError, KeyError) as error:
+        print(f"published index unreadable ({error!r}), building anyway", flush=True)
+        return None
+
+
 def load_stations(limit: int | None = None) -> list[dict[str, Any]]:
     """Fetch ČHMÚ station metadata (today's file, yesterday's as a fallback)."""
     for delta in (0, 1):
@@ -203,8 +227,19 @@ def read_grid(run: str) -> Grid:
     return next(iter_messages(bz2.decompress(blob))).grid
 
 
-def build(out_dir: Path, limit: int | None = None) -> None:
+def build(
+    out_dir: Path, limit: int | None = None, published_index: str | None = None
+) -> None:
     run = find_latest_run()
+    if published_index:
+        already = published_run(published_index)
+        if already is not None and run <= already:
+            print(
+                f"newest complete run on opendata is {run}, the site already "
+                f"serves {already}: nothing to publish",
+                flush=True,
+            )
+            return
     reference = datetime.strptime(run, "%Y%m%d%H").replace(tzinfo=UTC)
     print(f"ALADIN CZ_1km run {reference:%Y-%m-%d %HZ}", flush=True)
 
@@ -302,8 +337,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=Path("dist"))
     parser.add_argument("--limit", type=int, help="only build the first N stations")
+    parser.add_argument(
+        "--published-index",
+        help="URL of the published v1/index.json; skip the build when the run "
+        "it names is the newest one opendata has",
+    )
     args = parser.parse_args()
-    build(args.out, args.limit)
+    build(args.out, args.limit, args.published_index)
 
 
 if __name__ == "__main__":

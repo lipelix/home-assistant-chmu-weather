@@ -4,13 +4,32 @@ name: Forecast data
 # the result as a static site, so the integration downloads a few kilobytes for
 # its own station instead of ~70 MB of GRIB for the whole country.
 #
-# ALADIN runs at 00/06/12/18 UTC and lands on opendata roughly 75 minutes later;
-# these times leave a margin on top of that.
+# ALADIN runs at 00/06/12/18 UTC, but a run does not land on opendata 75 minutes
+# later as this workflow used to assume - measured on the directory listing, the
+# lag is three to four and a half hours (00Z at 03:31, 06Z at 10:24, 12Z at
+# 15:11, 18Z at 22:23 UTC on 2026-09-16/17) and it moves around by an hour from
+# one cycle to the next. Four fixed slots cannot track that, all the less so
+# because GitHub delays scheduled runs on shared runners by hours: the 19:30
+# slot of 2026-09-16 started at 22:15 and missed the 18Z run by eight minutes,
+# leaving the site on the 12Z run until the next morning.
+#
+# So the schedule does not try to be clever about when a run appears. It looks
+# every hour, and the build asks the site which run it is already serving and
+# stops before the ~63 MB download when opendata has nothing newer - a skipped
+# cycle costs one directory listing. A new run is therefore published within an
+# hour of appearing, whichever hour that turns out to be, and a run delayed by
+# GitHub only costs the wait, not the cycle. The minute is deliberately not on
+# the hour, which is when GitHub's scheduler is busiest.
 
 on:
   schedule:
-    - cron: "30 1,7,13,19 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild even when the site already serves the newest run"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -49,18 +68,40 @@ jobs:
           python-version: '3.11'
 
       # No third-party dependencies on purpose: tools/aladin.py decodes GRIB1
-      # with the standard library only.
+      # with the standard library only. --published-index points at the site
+      # this workflow deploys to, which is the integration's FORECAST_BASE_URL
+      # in custom_components/chmu/const.py; nothing is written to dist when the
+      # run it names is already the newest one, so the steps below are skipped.
       - name: Build forecast data
-        run: python tools/build_forecast_data.py --out dist
+        id: build
+        env:
+          FORCE: ${{ inputs.force }}
+          INDEX: https://lipelix.github.io/home-assistant-chmu-weather/v1/index.json
+        run: |
+          set -euo pipefail
+          # A forced dispatch passes no index, so the build never skips.
+          if [ "${FORCE:-false}" = "true" ]; then
+            INDEX=""
+          fi
+          python tools/build_forecast_data.py --out dist \
+            ${INDEX:+--published-index "$INDEX"}
+          if [ -f dist/v1/index.json ]; then
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Configure Pages
+        if: steps.build.outputs.built == 'true'
         uses: actions/configure-pages@v6
 
       - name: Upload artifact
+        if: steps.build.outputs.built == 'true'
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
       - name: Deploy to Pages
         id: deploy
+        if: steps.build.outputs.built == 'true'
         uses: actions/deploy-pages@v5

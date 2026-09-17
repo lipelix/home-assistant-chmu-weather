@@ -276,3 +276,89 @@ def test_load_stations_falls_back_when_todays_metadata_is_truncated(
 
     assert [s["station_id"] for s in stations] == ["0-20000-0-11518"]
     assert len(urlopen.calls) == builder.RETRY_ATTEMPTS + 1
+
+
+INDEX = "https://lipelix.github.io/home-assistant-chmu-weather/v1/index.json"
+
+
+def _raise(error: type[Exception]):
+    """A stand-in whose only job is to report that it was called."""
+
+    def stub(*_args, **_kwargs):
+        raise error("called")
+
+    return stub
+
+
+def test_published_run_reads_the_run_the_site_serves(monkeypatch):
+    """The run id has to come back in the form find_latest_run compares against."""
+    urlopen = _Urlopen(b'{"schema": 1, "run": "2026-09-16T18:00:00Z"}')
+    monkeypatch.setattr(builder.urllib.request, "urlopen", urlopen)
+
+    assert builder.published_run(INDEX) == "2026091618"
+    assert urlopen.calls == [INDEX]
+
+
+def test_published_run_is_unknown_before_the_first_deploy(monkeypatch, no_sleeping):
+    """A site with no index yet must not stop the build that would create one."""
+    urlopen = _Urlopen(_http_error(404))
+    monkeypatch.setattr(builder.urllib.request, "urlopen", urlopen)
+
+    assert builder.published_run(INDEX) is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"<html>404</html>",  # a Pages error page, served with a 200
+        b'{"schema": 1}',  # an index from before the field existed
+        b'{"schema": 1, "run": "whenever"}',  # something that is not a timestamp
+    ],
+)
+def test_published_run_is_unknown_when_the_index_makes_no_sense(monkeypatch, body):
+    """Anything unparseable means "cannot tell", which must not block a build."""
+    monkeypatch.setattr(builder.urllib.request, "urlopen", _Urlopen(body))
+
+    assert builder.published_run(INDEX) is None
+
+
+def test_build_skips_the_download_when_the_site_has_the_newest_run(
+    monkeypatch, tmp_path
+):
+    """The hourly schedule only works if a run already published costs nothing.
+
+    Downloading is ~63 MB per parameter set, so the check has to happen before
+    the station metadata is even asked for, and nothing may be written - the
+    workflow reads the absence of dist as "nothing to deploy".
+    """
+    monkeypatch.setattr(builder, "find_latest_run", lambda: "2026091618")
+    monkeypatch.setattr(builder, "published_run", lambda url: "2026091618")
+    monkeypatch.setattr(builder, "load_stations", _raise(AssertionError))
+
+    builder.build(tmp_path, published_index=INDEX)
+
+    assert list(tmp_path.iterdir()) == []
+
+
+class _GotPastTheCheck(Exception):
+    """Raised by the stub standing in for the first download of a real build."""
+
+
+def test_build_publishes_a_run_newer_than_the_site_s(monkeypatch, tmp_path):
+    """The whole point: a run newer than the site's must get past the check."""
+    monkeypatch.setattr(builder, "find_latest_run", lambda: "2026091700")
+    monkeypatch.setattr(builder, "published_run", lambda url: "2026091618")
+    monkeypatch.setattr(builder, "load_stations", _raise(_GotPastTheCheck))
+
+    with pytest.raises(_GotPastTheCheck):
+        builder.build(tmp_path, published_index=INDEX)
+
+
+def test_build_without_a_published_index_never_asks(monkeypatch, tmp_path):
+    """A local build has no site to compare against and must just build."""
+    monkeypatch.setattr(builder, "find_latest_run", lambda: "2026091618")
+    monkeypatch.setattr(builder, "published_run", _raise(AssertionError))
+    monkeypatch.setattr(builder, "load_stations", _raise(_GotPastTheCheck))
+
+    with pytest.raises(_GotPastTheCheck):
+        builder.build(tmp_path)
