@@ -75,6 +75,16 @@ SUNSET_ELEVATION = -0.833
 # the early afternoon at this latitude in every season.
 DAILY_HIGH_HOUR = 15
 
+# The same, for a day that is not today. Such a day's rows always begin at
+# midnight and end where the model's horizon does, so the only way they can be
+# short is at the far end - the evening-suffix problem DAILY_HIGH_HOUR guards
+# against cannot arise. An earlier hour is therefore enough, and it has to be:
+# a 72 hour run launched at 12:00Z reaches 14:00 local on its last day, one
+# hour short of DAILY_HIGH_HOUR, so that day was dropped for want of a high and
+# the forecast fell to two days - which Home Assistant's frontend discards
+# outright, rendering the Daily tab as a spinner that never resolves.
+TAIL_HIGH_HOUR = 13
+
 _HOURLY_KEYS = {
     "temperature": "native_temperature",
     "humidity": "humidity",
@@ -277,7 +287,7 @@ def _hourly_entries(
     return entries
 
 
-def _spans_the_afternoon(hours: list[dict[str, Any]]) -> bool:
+def _spans_the_afternoon(hours: list[dict[str, Any]], *, is_today: bool) -> bool:
     """Return whether a day's hourly rows cover its afternoon from both sides.
 
     A daily high is an afternoon number, so the rows can only stand in for a
@@ -287,11 +297,17 @@ def _spans_the_afternoon(hours: list[dict[str, Any]]) -> bool:
     suffix starting at the current hour, so an evening poll is left with hours
     that have already cooled - reporting one of those as the day's high puts a
     number below that day's own overnight low on the forecast tile.
+
+    Only today can be a suffix, so only today is held to DAILY_HIGH_HOUR. A
+    later day runs from midnight to wherever the model stops, and by the early
+    afternoon it is close enough to its maximum that the warmest row so far is
+    a fair reading of the high - far better than dropping the day.
     """
     local_hours = [
         hour["_valid_time"].astimezone(LOCAL_TIMEZONE).hour for hour in hours
     ]
-    return bool(local_hours) and min(local_hours) <= DAILY_HIGH_HOUR <= max(local_hours)
+    wanted = DAILY_HIGH_HOUR if is_today else TAIL_HIGH_HOUR
+    return bool(local_hours) and min(local_hours) <= wanted <= max(local_hours)
 
 
 def _daily_entries(
@@ -324,8 +340,10 @@ def _daily_entries(
         # day is what has to be avoided: Home Assistant reports "no forecast"
         # and "not fetched yet" the same way, and its frontend renders both as
         # a forecast tab that spins forever.
+        low = row.get("templow")
+
         high = row.get("temperature")
-        if high is None and _spans_the_afternoon(hours):
+        if high is None and _spans_the_afternoon(hours, is_today=date == today):
             high = max(
                 (
                     hour["native_temperature"]
@@ -334,6 +352,12 @@ def _daily_entries(
                 ),
                 default=None,
             )
+            # A high read off the hourly rows is a lower bound on the real one,
+            # because the rows can stop before the day peaks. Left alone it can
+            # therefore come out under the day's own published minimum and draw
+            # a tile whose high sits below its low.
+            if high is not None and low is not None and high < low:
+                high = low
         if high is None:
             continue
 
@@ -343,7 +367,7 @@ def _daily_entries(
             "native_temperature": high,
         }
 
-        if (low := row.get("templow")) is not None:
+        if low is not None:
             entry["native_templow"] = low
 
         precipitation = [

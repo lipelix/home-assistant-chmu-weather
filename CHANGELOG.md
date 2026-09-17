@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- The daily forecast tab no longer spins from the day after a model run is
+  published until the next one lands. Home Assistant's frontend discards any
+  forecast of two entries or fewer and renders the tab as a spinner instead, so
+  a forecast has to carry at least three days to be shown at all. A 72 hour
+  ALADIN run launched at 12:00Z reaches 14:00 local on its last day and
+  publishes no 12 hour maximum for it, and that day was dropped for want of a
+  high - one hour short of the 15:00 test - leaving exactly two days.
+
+  A day that is not today now only has to be covered to 13:00 local for its
+  hourly rows to stand in for the missing maximum. Such a day runs from
+  midnight to wherever the model stops, so the one thing the 15:00 test was
+  guarding against - today's rows being an evening suffix of hours that have
+  already cooled - cannot arise there; today is still held to 15:00. A high
+  read off the hourly rows is also no longer allowed to fall below that day's
+  own published overnight low, which would draw a tile with its high under its
+  low
+
 ## [1.7.1] - 2026-09-14
 
 ### Fixed
