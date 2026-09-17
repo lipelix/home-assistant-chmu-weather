@@ -464,11 +464,15 @@ def test_an_evening_poll_does_not_report_a_cooled_hour_as_the_days_high():
 @pytest.mark.parametrize(
     ("last_offset", "reported"),
     [
-        (24, False),  # the 9th's rows stop at 14:00 local, short of the afternoon
-        (25, True),  # they reach 15:00 local
+        (21, False),  # the 9th's rows stop at 11:00 local, short of its afternoon
+        (22, False),  # 12:00 local, still short
+        (23, True),  # 13:00 local, far enough into the afternoon to read a high
+        (24, True),  # 14:00 local - where a 72 hour run from 12:00Z actually ends
     ],
 )
 def test_the_fallback_needs_the_afternoon_inside_the_hourly_rows(last_offset, reported):
+    # A later day's rows run from midnight to wherever the model stops, so the
+    # only end they can be short at is the far one.
     document = _document(
         hourly=[_hour(offset) for offset in range(10, last_offset + 1)],
         daily=[
@@ -481,6 +485,62 @@ def test_the_fallback_needs_the_afternoon_inside_the_hourly_rows(last_offset, re
 
     dates = [day["datetime"][:10] for day in parsed.daily]
     assert ("2026-09-09" in dates) is reported
+
+
+def test_a_day_old_run_still_reports_three_days():
+    # Home Assistant's frontend discards any forecast of two entries or fewer
+    # (frontend src/data/weather.ts, `forecast.length > 2`) and renders the
+    # Daily tab as a spinner instead. A 72 hour run launched at 12:00Z reaches
+    # 14:00 local on its last day and publishes no 12 hour maximum for it, so
+    # the day after that run was published this fell to exactly two days.
+    run = datetime(2026, 9, 7, 12, 0, tzinfo=UTC)
+    hourly = [
+        {
+            **_hour(0),
+            "datetime": (run + timedelta(hours=step))
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "temperature": 12.0 + step % 24,
+        }
+        for step in range(73)
+    ]
+    document = _document(
+        run=run,
+        hourly=hourly,
+        daily=[
+            {"date": "2026-09-07", "temperature": 25.9},
+            {"date": "2026-09-08", "temperature": 19.5, "templow": 10.6},
+            {"date": "2026-09-09", "temperature": 20.4, "templow": 9.7},
+            {"date": "2026-09-10", "templow": 8.9},  # no high: the run ends here
+        ],
+    )
+
+    parsed = fc.parse_forecast(document, NOW)
+
+    dates = [day["datetime"][:10] for day in parsed.daily]
+    assert dates == ["2026-09-08", "2026-09-09", "2026-09-10"]
+    assert len(parsed.daily) > 2
+
+
+def test_an_approximated_high_is_never_below_the_days_own_low():
+    # The rows can stop before the day peaks, so a high read off them is a lower
+    # bound - and an unlucky one lands under the published overnight minimum,
+    # drawing a tile whose high sits below its low.
+    hours = [_hour(offset, temperature=2.0) for offset in range(10, 24)]
+    document = _document(
+        hourly=hours,
+        daily=[
+            {"date": "2026-09-08", "temperature": 28.8},
+            {"date": "2026-09-09", "templow": 12.0},
+        ],
+    )
+
+    parsed = fc.parse_forecast(document, NOW)
+
+    ninth = parsed.daily[1]
+    assert ninth["datetime"][:10] == "2026-09-09"
+    assert ninth["native_temperature"] == 12.0
+    assert ninth["native_temperature"] >= ninth["native_templow"]
 
 
 @pytest.mark.parametrize("elapsed", range(0, 48, 3))
