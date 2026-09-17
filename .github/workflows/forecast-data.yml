@@ -18,12 +18,19 @@ name: Forecast data
 # stops before the ~63 MB download when opendata has nothing newer - a skipped
 # cycle costs one directory listing. A new run is therefore published within an
 # hour of appearing, whichever hour that turns out to be, and a run delayed by
-# GitHub only costs the wait, not the cycle. The minute is deliberately not on
-# the hour, which is when GitHub's scheduler is busiest.
+# GitHub only costs the wait, not the cycle.
+#
+# Three slots an hour, on minutes that are neither round nor multiples of five:
+# GitHub delays scheduled runs under load and drops the queued ones outright
+# when the load is high enough, and a single hourly slot at :17 was measured
+# delivering one firing out of roughly nine over an afternoon. Extra slots do
+# not make any firing punctual - nothing available here can - but a dropped one
+# then costs an attempt rather than the hour. A slot that survives and finds
+# nothing new exits before the download, so the redundancy is close to free.
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "7,23,43 * * * *"
   workflow_dispatch:
     inputs:
       force:
