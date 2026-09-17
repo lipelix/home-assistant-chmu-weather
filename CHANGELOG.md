@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-09-17
+
+### Fixed
+- The published forecast is no longer up to a day behind the model. The
+  publishing workflow ran four fixed slots placed on the assumption that an
+  ALADIN run reaches opendata 75 minutes after its 00/06/12/18Z reference hour;
+  measured on the directory listing the lag is three to four and a half hours
+  and it drifts by an hour from one cycle to the next, so the slots never
+  tracked publication. GitHub delaying scheduled runs by hours covered for that
+  most of the time and stopped covering for it once: a slot started eight
+  minutes before the 18Z run finished uploading, took the 12Z run instead and
+  left it served overnight - a run old enough to carry two days rather than
+  three, which the frontend discards outright.
+
+  The schedule no longer tries to predict when a run appears. It looks every
+  hour, and the build asks the site which run it is already serving and stops
+  before the download when opendata has nothing newer, so a new run is
+  published within an hour of appearing and a delayed job costs the wait rather
+  than the cycle.
+
 ## [1.7.2] - 2026-09-17
 
 ### Fixed
