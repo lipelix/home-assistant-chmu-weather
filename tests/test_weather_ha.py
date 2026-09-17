@@ -15,6 +15,7 @@ import json
 import threading
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -526,7 +527,9 @@ def _not_found_response() -> MagicMock:
     response = MagicMock()
     response.status_code = 404
     response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-        "404", response=SimpleNamespace(status_code=404)
+        "404",
+        # Only .status_code is read; requests.Response is too heavy to build.
+        response=cast(requests.Response, SimpleNamespace(status_code=404)),
     )
     return response
 

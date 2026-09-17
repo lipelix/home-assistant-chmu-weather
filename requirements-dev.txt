@@ -3,6 +3,11 @@
 # (0.16.0 broke CI), so CI, pre-commit and local runs must use the same version.
 ruff==0.16.3
 pre-commit>=3.5.0
+# pyright is pinned exactly: new releases tighten inference and change which
+# Home Assistant type-stub mismatches are reported, which turned a clean tree
+# into 33 errors once already (issue #20). CI (types job) and local runs
+# (./lint.sh) must agree on the version; pyrightconfig.json holds the rule set.
+pyright==1.1.411
 pytest>=8.3.0
 # Real Home Assistant plus its test fixtures, for tests/test_weather_ha.py.
 # Pinned exactly: the harness tracks Home Assistant releases closely, so an

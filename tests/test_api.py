@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 from importlib import import_module
 from types import SimpleNamespace
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -55,7 +56,9 @@ def _http_response(status_code: int, payload: dict | None = None) -> MagicMock:
 
     if status_code >= 400:
         http_error = requests.exceptions.HTTPError(
-            "error", response=SimpleNamespace(status_code=status_code)
+            "error",
+            # Only .status_code is read; requests.Response is too heavy to build.
+            response=cast(requests.Response, SimpleNamespace(status_code=status_code)),
         )
         response.raise_for_status.side_effect = http_error
     else:

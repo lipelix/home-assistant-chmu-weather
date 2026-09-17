@@ -9,8 +9,11 @@ than from ČHMÚ directly.
 from homeassistant.components.weather import (
     Forecast,
     WeatherEntity,
-    WeatherEntityFeature,
 )
+
+# Re-exported by homeassistant.components.weather, but not in its __all__, so
+# type checkers require the canonical module.
+from homeassistant.components.weather.const import WeatherEntityFeature
 from homeassistant.const import (
     UnitOfPrecipitationDepth,
     UnitOfPressure,

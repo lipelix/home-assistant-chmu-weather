@@ -17,6 +17,9 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
+        # pyrightconfig.json documents its rule choices in comments, which
+        # pyright accepts and strict JSON does not.
+        exclude: ^pyrightconfig\.json$
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: mixed-line-ending
