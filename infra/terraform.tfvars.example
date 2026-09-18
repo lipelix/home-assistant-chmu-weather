@@ -1,5 +1,0 @@
-# Copy to terraform.tfvars (gitignored) or export as TF_VAR_* instead.
-cloudflare_account_id = "0123456789abcdef0123456789abcdef"
-
-# Do NOT put the PAT in a committed file. Prefer:
-#   export TF_VAR_github_token="github_pat_..."

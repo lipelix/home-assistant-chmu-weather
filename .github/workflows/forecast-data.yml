@@ -19,10 +19,11 @@ name: Forecast data
 # hours either way, landing nowhere near the minute asked for. The 2026-09-17
 # 12Z run sat unpublished for two hours because of it.
 #
-# The clock lives in infra/ instead: a Cloudflare Worker on a cron trigger
-# dispatches this workflow every twenty minutes. Cloudflare fires on time, so
-# the lag between a run appearing on opendata and being served is bounded by
-# the poll interval rather than by GitHub's queue.
+# The clock lives outside GitHub instead: a Cloudflare Worker on a cron trigger
+# dispatches this workflow three times an hour. It is provisioned by Terraform
+# in the private liplab-tech-infra repository (infrastructure/workers.tf).
+# Cloudflare fires on time, so the lag between a run appearing on opendata and
+# being served is bounded by the poll interval rather than by GitHub's queue.
 
 on:
   workflow_dispatch:
