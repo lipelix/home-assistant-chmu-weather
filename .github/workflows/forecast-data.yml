@@ -7,30 +7,24 @@ name: Forecast data
 # ALADIN runs at 00/06/12/18 UTC, but a run does not land on opendata 75 minutes
 # later as this workflow used to assume - measured on the directory listing, the
 # lag is three to four and a half hours (00Z at 03:31, 06Z at 10:24, 12Z at
-# 15:11, 18Z at 22:23 UTC on 2026-09-16/17) and it moves around by an hour from
-# one cycle to the next. Four fixed slots cannot track that, all the less so
-# because GitHub delays scheduled runs on shared runners by hours: the 19:30
-# slot of 2026-09-16 started at 22:15 and missed the 18Z run by eight minutes,
-# leaving the site on the 12Z run until the next morning.
+# 15:11, 18Z at 22:23 UTC on 2026-09-16/17) and it drifts by an hour from one
+# cycle to the next, so no fixed slot can track it. The build therefore polls:
+# it asks the site which run it is already serving and stops before the ~63 MB
+# download when opendata has nothing newer, which makes a poll cost seconds.
 #
-# So the schedule does not try to be clever about when a run appears. It looks
-# every hour, and the build asks the site which run it is already serving and
-# stops before the ~63 MB download when opendata has nothing newer - a skipped
-# cycle costs one directory listing. A new run is therefore published within an
-# hour of appearing, whichever hour that turns out to be, and a run delayed by
-# GitHub only costs the wait, not the cycle.
+# The polling is not scheduled here, because GitHub's scheduler cannot do it.
+# Scheduled runs are delayed under load and dropped when the load is high
+# enough: measured on this repository, one hourly slot delivered one firing out
+# of nine, and tripling the slots changed nothing - about one firing every four
+# hours either way, landing nowhere near the minute asked for. The 2026-09-17
+# 12Z run sat unpublished for two hours because of it.
 #
-# Three slots an hour, on minutes that are neither round nor multiples of five:
-# GitHub delays scheduled runs under load and drops the queued ones outright
-# when the load is high enough, and a single hourly slot at :17 was measured
-# delivering one firing out of roughly nine over an afternoon. Extra slots do
-# not make any firing punctual - nothing available here can - but a dropped one
-# then costs an attempt rather than the hour. A slot that survives and finds
-# nothing new exits before the download, so the redundancy is close to free.
+# The clock lives in infra/ instead: a Cloudflare Worker on a cron trigger
+# dispatches this workflow every twenty minutes. Cloudflare fires on time, so
+# the lag between a run appearing on opendata and being served is bounded by
+# the poll interval rather than by GitHub's queue.
 
 on:
-  schedule:
-    - cron: "7,23,43 * * * *"
   workflow_dispatch:
     inputs:
       force:
