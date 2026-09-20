@@ -52,7 +52,25 @@ The integration is configured via the UI (Config Flow). No YAML configuration is
 - Creates only the sensors a station actually measures (many automatic
   stations report precipitation only)
 - Pre-selects the station nearest to your Home Assistant location
+- Keeps every 10-minute measurement as **hourly statistics**, not just the
+  newest one (see below)
 - Easy configuration through the Home Assistant UI
+
+### Hourly statistics
+
+ČHMÚ measures every 10 minutes but publishes an hour's six measurements in one
+go, so only the newest one can become the sensor's state — the other five used
+to be thrown away. They are now kept as long-term statistics, one row per hour
+carrying that hour's real mean, minimum and maximum.
+
+They appear in the statistics picker (for example in a Statistics graph card)
+as `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, named after your
+station. Nothing needs configuring; a recorder has to be enabled, which it is
+in a default Home Assistant installation.
+
+Precipitation is not included, and the five extra readings cannot be shown on
+the sensor's own history graph: Home Assistant can only store imported
+statistics at whole hours, and it has no way to backdate a sensor state.
 
 ### Where the forecast comes from
 

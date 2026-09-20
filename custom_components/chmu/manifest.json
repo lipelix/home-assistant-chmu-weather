@@ -1,6 +1,7 @@
 {
   "domain": "chmu",
   "name": "ČHMÚ Weather",
+  "after_dependencies": ["recorder"],
   "codeowners": ["@lipelix"],
   "config_flow": true,
   "dependencies": [],

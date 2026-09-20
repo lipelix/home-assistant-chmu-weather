@@ -71,7 +71,9 @@
 4. **Data Parsing** → Extracts measurements (temp, humidity, etc.)
 5. **Sensor Update** → Updates entity states in Home Assistant
 6. **History Recording** → Automatic long-term statistics
-7. **Dashboard Display** → Real-time values and historical graphs
+7. **Hourly Statistics** → The rest of each published batch is kept as
+   external statistics (see below)
+8. **Dashboard Display** → Real-time values and historical graphs
 
 ## Available Weather Stations
 
@@ -162,6 +164,39 @@ conditions in the integration, so the mapping can change without regenerating
 the data. ALADIN does emit a precipitation type field, but ČHMÚ documents no
 code table for it, so it is used only as a wetness hint and rain versus snow is
 decided by temperature.
+
+## Hourly Statistics
+
+ČHMÚ measures every 10 minutes but rewrites a station's file only once an hour,
+adding the previous hour's six rows in one batch. Only the newest row can
+become a sensor state, so five of every six measurements used to be downloaded
+and dropped, leaving an hour-long flat line in the recorder followed by a jump.
+
+Those rows are now folded into one statistics row per hour and imported as
+**external statistics** under `chmu:{station}_{element}`:
+
+| Module | Role |
+|---|---|
+| `api.py` | Collects every row of the batch as `history` alongside the newest value |
+| `statistics.py` | Folds the rows into hourly mean / minimum / maximum. No Home Assistant imports, so it is testable from a bare virtualenv |
+| `statistics_import.py` | Builds the recorder metadata and queues the rows |
+
+Notes on the shape of this:
+
+- Home Assistant has no API for backdating an entity state, and imported
+  statistics **must** start at the top of an hour, so the six rows cannot be
+  replayed as six points. The hour they describe is what can be kept.
+- The same hour is re-offered on every poll while ČHMÚ serves it. The recorder
+  replaces a row with the same statistic id and start, so an hour that is still
+  filling up ends up complete and nothing is double counted.
+- Wind direction uses the circular mean, the same computation the recorder uses
+  for wind bearing sensors; minimum and maximum of an angle are meaningless and
+  are left out.
+- Precipitation is left out entirely: whether a `SRA10M` row is the amount
+  fallen in those 10 minutes or a running total is unsettled, and the two
+  readings need different arithmetic.
+- The recorder is an `after_dependencies` entry, not a dependency: without one
+  the statistics are skipped with a warning and the sensors carry on.
 
 ## API Details
 
