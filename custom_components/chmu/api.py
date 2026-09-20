@@ -420,8 +420,12 @@ class ChmuApi:
         if not values:
             raise NoStationData("the file carries no measurement rows")
 
-        # Get the most recent values for each element
+        # Get the most recent values for each element, and keep the rest of the
+        # batch as history: ČHMÚ publishes an hour's six measurements at once,
+        # so the five older ones are just as real as the newest and would
+        # otherwise be downloaded and dropped (#18).
         latest_values = {}
+        history: dict[str, list[list[Any]]] = {}
         for row in values:
             if len(row) < 4:
                 continue
@@ -434,6 +438,10 @@ class ChmuApi:
             # Only process our station's data
             if station_id != self.wsi:
                 continue
+
+            key = ELEMENT_MAP.get(element)
+            if key is not None:
+                history.setdefault(key, []).append([timestamp, value])
 
             # Keep only the latest value for each element
             if (
@@ -455,8 +463,20 @@ class ChmuApi:
 
         result["station_name"] = self.station_name
         result["timestamp"] = self._latest_timestamp(latest_values)
+        # Rows arrive grouped by element and ordered in practice, but nothing
+        # published says they must be, and the hourly aggregation reads them as
+        # a series.
+        result["history"] = {
+            key: sorted(rows, key=lambda row: row[0]) for key, rows in history.items()
+        }
 
-        _LOGGER.debug(f"Parsed data: {result}")
+        # History is logged as a count: a whole day of rows for six elements is
+        # hundreds of entries and would bury every other debug line.
+        _LOGGER.debug(
+            "Parsed data: %s (history: %s)",
+            {key: value for key, value in result.items() if key != "history"},
+            {key: len(rows) for key, rows in result["history"].items()},
+        )
         return result
 
     @staticmethod

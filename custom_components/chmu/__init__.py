@@ -54,21 +54,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
     api = ChmuApi(station_id, station_name)
     forecast_api = ChmuForecastApi(station_id)
 
+    # Imported here rather than at module level because it pulls in the
+    # recorder, and the test suite imports this package against a small Home
+    # Assistant stub from a bare virtualenv.
+    from .statistics_import import StatisticsImporter
+
+    statistics_importer = StatisticsImporter(hass, station_id, station_name)
+
     async def async_update_data():
         """Fetch the station's own measurements.
 
         A measurement too old to present is reported as such rather than as a
         communication error: the download worked, so calling it one would send
         the next person debugging this at the wrong thing.
+
+        The published file holds an hour of 10 minute rows and only the newest
+        becomes the sensor state, so the rest are handed to the recorder as
+        hourly statistics on the way past (#18).
         """
         try:
-            return await hass.async_add_executor_job(api.get_current_data)
+            data = await hass.async_add_executor_job(api.get_current_data)
         except MeasurementUnusable as err:
             raise UpdateFailed(
                 f"No usable ČHMÚ measurement for station {station_id}: {err}"
             ) from err
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
+
+        statistics_importer.async_import(data)
+        return data
 
     def _pace_forecast_polling(retry_soon: bool) -> None:
         """Retry within minutes after a download that failed leaving nothing.
