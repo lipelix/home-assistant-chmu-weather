@@ -482,6 +482,46 @@ async def test_sensors_still_work_alongside_the_weather_entity(hass, setup_entry
     assert state.state == "21.3"
 
 
+async def test_every_sensor_gets_a_name(hass, forecast_response, measured_response):
+    """No sensor may fall back to a nameless entity (issue #3).
+
+    Wind direction and the weather description carry no device class, so a
+    missing entity translation leaves their name at None: the entity is then
+    named after the station alone and its id ends in _none.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Brno, Tu\u0159any",
+        data={
+            "station_id": "11723",
+            "station_name": "Brno, Tu\u0159any",
+            "station_elements": [
+                "temperature",
+                "humidity",
+                "pressure",
+                "precipitation",
+                "wind_speed",
+                "wind_direction",
+            ],
+        },
+    )
+    entry.add_to_hass(hass)
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    names = {
+        state.entity_id: state.attributes.get("friendly_name")
+        for state in hass.states.async_all("sensor")
+    }
+
+    assert names, "no sensors were created"
+    assert "sensor.brno_turany_wind_direction" in names
+    for entity_id, friendly_name in names.items():
+        assert not entity_id.endswith("_none"), entity_id
+        assert friendly_name not in (None, "Brno, Tu\u0159any"), entity_id
+
+
 async def test_unload_removes_the_entity(hass, setup_entry):
     """Unloading the entry tears the weather entity down."""
     assert await hass.config_entries.async_unload(setup_entry.entry_id)
