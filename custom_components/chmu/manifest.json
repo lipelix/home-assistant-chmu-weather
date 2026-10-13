@@ -9,6 +9,6 @@
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/lipelix/home-assistant-chmu-weather/issues",
-  "requirements": ["requests>=2.31.0"],
+  "requirements": [],
   "version": "1.8.0"
 }
