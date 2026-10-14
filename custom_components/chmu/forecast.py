@@ -85,6 +85,13 @@ DAILY_HIGH_HOUR = 15
 # outright, rendering the Daily tab as a spinner that never resolves.
 TAIL_HIGH_HOUR = 13
 
+# UTC hour the published overnight minimum is stamped with: ALADIN's 12 hour
+# minimum covers 18Z to 06Z. Only the 00Z run reaches back to today's 06Z, so
+# the 06Z, 12Z and 18Z runs carry no low for today, which is most of the day.
+# By then the night is over and the station has measured it, so the measured
+# minimum fills the gap - a real value rather than an estimate.
+OVERNIGHT_LOW_UTC_HOUR = 6
+
 _HOURLY_KEYS = {
     "temperature": "native_temperature",
     "humidity": "humidity",
@@ -406,6 +413,56 @@ def _daily_entries(
         entries.append(entry)
 
     return entries
+
+
+def with_measured_low(
+    daily: list[dict[str, Any]], temperatures: list[list[Any]], now: datetime
+) -> list[dict[str, Any]]:
+    """Fill today's missing low with the overnight minimum the station measured.
+
+    ``temperatures`` is the station's 10 minute series as ``[timestamp, °C]``
+    rows. The station's data file starts at 00Z, so the measured window is
+    00Z-06Z rather than the model's 18Z-06Z; the minimum falls near dawn on
+    almost every night. Nothing is filled until the window has been measured
+    to its end, and a low above the day's high is left out rather than drawn
+    as an inverted tile.
+    """
+    today = now.astimezone(LOCAL_TIMEZONE).date()
+    window_end = datetime(
+        today.year, today.month, today.day, OVERNIGHT_LOW_UTC_HOUR, tzinfo=UTC
+    )
+    if now < window_end:
+        return daily
+
+    measured = []
+    covered = False
+    for timestamp, value in temperatures:
+        if not isinstance(timestamp, str) or not isinstance(value, int | float):
+            continue
+        try:
+            when = _parse_time(timestamp)
+        except ValueError:
+            continue
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=UTC)
+        if window_end - timedelta(hours=OVERNIGHT_LOW_UTC_HOUR) <= when <= window_end:
+            measured.append(float(value))
+        covered = covered or when >= window_end
+    if not measured or not covered:
+        return daily
+
+    low = min(measured)
+    filled = []
+    for entry in daily:
+        date = datetime.fromisoformat(entry["datetime"]).date()
+        if (
+            date == today
+            and entry.get("native_templow") is None
+            and entry["native_temperature"] >= low
+        ):
+            entry = {**entry, "native_templow": low}
+        filled.append(entry)
+    return filled
 
 
 def _daily_condition(

@@ -580,6 +580,87 @@ def test_days_already_over_are_dropped():
     assert [day["native_temperature"] for day in parsed.daily] == [28.8]
 
 
+# --- measured low ----------------------------------------------------------
+
+
+def _night(*readings):
+    """Today's 10 minute temperatures as [timestamp, °C] rows, from 00Z."""
+    return [
+        [f"2026-09-08T{hour:02d}:{minute:02d}:00Z", value]
+        for hour, minute, value in readings
+    ]
+
+
+NIGHT = _night((0, 0, 14.0), (3, 50, 9.4), (5, 0, 10.1), (6, 0, 11.0), (9, 0, 18.0))
+
+
+def _today_without_a_low():
+    document = _document(
+        daily=[
+            {"date": "2026-09-08", "temperature": 29.1},
+            {"date": "2026-09-09", "temperature": 27.0, "templow": 13.0},
+        ]
+    )
+    return fc.parse_forecast(document, NOW).daily
+
+
+def test_todays_missing_low_comes_from_the_measured_night():
+    daily = fc.with_measured_low(_today_without_a_low(), NIGHT, NOW)
+
+    assert daily[0]["native_templow"] == 9.4
+    assert daily[1]["native_templow"] == 13.0
+
+
+def test_a_published_low_is_kept():
+    document = _document(
+        daily=[{"date": "2026-09-08", "temperature": 29.1, "templow": 11.5}]
+    )
+    daily = fc.parse_forecast(document, NOW).daily
+
+    assert fc.with_measured_low(daily, NIGHT, NOW)[0]["native_templow"] == 11.5
+
+
+def test_readings_after_the_night_do_not_count():
+    night = _night((2, 0, 12.0), (6, 0, 12.5), (7, 0, 8.0))
+
+    daily = fc.with_measured_low(_today_without_a_low(), night, NOW)
+
+    assert daily[0]["native_templow"] == 12.0
+
+
+@pytest.mark.parametrize(
+    ("readings", "now"),
+    [
+        # The night is not over yet.
+        (NIGHT, datetime(2026, 9, 8, 5, 30, tzinfo=UTC)),
+        # The night is over but not yet measured to its end.
+        (_night((0, 0, 14.0), (3, 50, 9.4)), NOW),
+        # No measurements at all.
+        ([], NOW),
+    ],
+)
+def test_a_night_not_measured_to_its_end_leaves_the_low_empty(readings, now):
+    daily = fc.with_measured_low(_today_without_a_low(), readings, now)
+
+    assert "native_templow" not in daily[0]
+
+
+def test_a_measured_low_above_the_days_high_is_left_out():
+    night = _night((3, 0, 30.0), (6, 0, 31.0))
+
+    daily = fc.with_measured_low(_today_without_a_low(), night, NOW)
+
+    assert "native_templow" not in daily[0]
+
+
+def test_unparseable_readings_are_skipped():
+    night = [["not a time", 1.0], ["2026-09-08T04:00:00Z", None], *NIGHT]
+
+    daily = fc.with_measured_low(_today_without_a_low(), night, NOW)
+
+    assert daily[0]["native_templow"] == 9.4
+
+
 # --- staleness -------------------------------------------------------------
 
 

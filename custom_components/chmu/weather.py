@@ -27,6 +27,7 @@ from homeassistant.util import dt as dt_util
 
 from . import ChmuConfigEntry
 from .const import CONF_STATION_ID, CONF_STATION_NAME, DOMAIN
+from .forecast import with_measured_low
 
 
 async def async_setup_entry(
@@ -117,6 +118,21 @@ class ChmuWeather(CoordinatorEntity, WeatherEntity):
             name=f"chmu forecast push {self._station_id}",
         )
 
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Write the new measurements and push the daily forecast.
+
+        Today's low can come from the measurements (see with_measured_low), so
+        a new batch can change the daily forecast without the forecast itself
+        changing.
+        """
+        super()._handle_coordinator_update()
+        self._entry.async_create_task(
+            self.hass,
+            self.async_update_listeners(("daily",)),
+            name=f"chmu daily forecast push {self._station_id}",
+        )
+
     @property
     def _measured(self) -> dict:
         """Return the latest station measurements."""
@@ -180,7 +196,12 @@ class ChmuWeather(CoordinatorEntity, WeatherEntity):
     async def async_forecast_daily(self) -> list[Forecast] | None:
         """Return the daily forecast."""
         forecast = self._forecast
-        return None if forecast is None else _as_forecast(forecast.daily)
+        if forecast is None:
+            return None
+        temperatures = self._measured.get("history", {}).get("temperature", [])
+        return _as_forecast(
+            with_measured_low(forecast.daily, temperatures, dt_util.utcnow())
+        )
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
         """Return the hourly forecast."""
