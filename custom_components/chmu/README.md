@@ -6,9 +6,9 @@ Custom Home Assistant integration for Czech Hydrometeorological Institute (ČHM�
 
 - 🌡️ **Real-time weather data** from ČHMÚ meteorological stations
 - 📊 **Multiple sensors**: Temperature, Humidity, Pressure, Precipitation, Wind Speed, Wind Direction, Weather Description
-- 🌤️ **Weather entity with a per-station forecast** - 72 hours hourly plus 3 days daily, from the ALADIN 1 km model sampled at your station
+- 🌤️ **Weather entity with a per-station forecast** - 62-70 hours hourly plus 3 days daily, from the ALADIN 1 km model sampled at your station
 - 📈 **Historical data support** via Home Assistant's built-in history tracking
-- 🗺️ **41+ stations** across Czech Republic
+- 🗺️ **~475 stations** across Czech Republic
 - 🎯 **Smart station selection** - automatically suggests nearest station based on your Home location
 - ⚡ **One-step setup** - pre-filled with recommended station
 
@@ -48,7 +48,8 @@ The integration features **intelligent location-based selection**:
 
 ## Available Stations
 
-**41+ professional meteorological stations** across Czech Republic, including:
+**About 475 stations** across Czech Republic - the 40 professional WMO stations
+plus automatic ones (many of which measure precipitation only), including:
 
 - Cheb
 - Karlovy Vary, Olšová Vrata
@@ -85,17 +86,18 @@ are the station's own measurements; the forecast is the ČHMÚ ALADIN CZ_1km mod
 
 | | |
 |---|---|
-| Hourly forecast | up to 72 hours |
-| Daily forecast | 3 days, with the 12 hour high and low |
+| Hourly forecast | 62-70 hours ahead (the model reaches 72 hours past its start, and a run is published 3-4½ hours after it) |
+| Daily forecast | 3 days, 4 in the evening while today is still shown; with the 12 hour high and low (today's low measured at the station once the model run starts after the night) |
+| Beyond 3 days | not offered - ČHMÚ's longer forecast is national only and ignores altitude |
 | Fields | condition, temperature, humidity, cloud cover, precipitation, wind speed and bearing |
 | Refresh | hourly; the model itself runs at 00, 06, 12 and 18 UTC |
 
 ![Weather entity with the daily and hourly forecast next to the measured sensors](../../assets/weather-forecast-dashboard.png)
 
-24 hours of the hourly forecast, with the day/night variants and the rain hours
-the model predicts:
+The hourly forecast in the entity's more-info dialog, with the day/night icon
+variants:
 
-![Hourly forecast over a day and a night](../../assets/weather-forecast-hourly.png)
+![Hourly forecast in the more-info dialog](../../assets/weather-forecast-hourly.png)
 
 Use it with the standard weather card:
 
@@ -108,7 +110,8 @@ show_current: true
 
 ČHMÚ publishes forecasts only as national prose or as roughly 70 MB of GRIB per
 model run, neither of which an integration can download on every update. A
-GitHub Actions job in this repository samples the GRIB at every station and
+GitHub Actions job in this repository, started as soon as a new run appears,
+samples the GRIB at every station and
 publishes a few kilobytes per station as a static site, which is what the
 integration fetches. The request carries no account, no token and no identifier
 beyond a User-Agent, and nothing is collected on top of GitHub Pages' own web
@@ -125,13 +128,13 @@ Add to your dashboard to visualize weather trends:
 ```yaml
 type: history-graph
 entities:
-  - entity: sensor.station_11406_temperature
+  - entity: sensor.plzen_mikulka_temperature
     name: Venkovní teplota
-  - entity: sensor.station_11406_humidity
+  - entity: sensor.plzen_mikulka_humidity
     name: Venkovní vlhkost
-  - entity: sensor.station_11406_pressure
+  - entity: sensor.plzen_mikulka_pressure
     name: Tlak
-  - entity: sensor.station_11406_precipitation
+  - entity: sensor.plzen_mikulka_precipitation
     name: Srážky
 hours_to_show: 24
 refresh_interval: 60
@@ -144,12 +147,12 @@ Simple display of current values:
 ```yaml
 type: entities
 entities:
-  - entity: sensor.station_11406_temperature
-  - entity: sensor.station_11406_humidity
-  - entity: sensor.station_11406_pressure
-  - entity: sensor.station_11406_precipitation
-  - entity: sensor.station_11406_wind_speed
-  - entity: sensor.station_11406_wind_direction
+  - entity: sensor.plzen_mikulka_temperature
+  - entity: sensor.plzen_mikulka_humidity
+  - entity: sensor.plzen_mikulka_pressure
+  - entity: sensor.plzen_mikulka_precipitation
+  - entity: sensor.plzen_mikulka_wind_speed
+  - entity: sensor.plzen_mikulka_wind_direction
 title: ČHMÚ - Venkovní počasí
 ```
 
@@ -183,7 +186,6 @@ Data is fetched from ČHMÚ's Open Data portal:
 
 - **Polling interval**: 10 minutes
 - **Timeout**: 30 seconds per request
-- **Fallback**: Simulated data if API unavailable (development mode)
 - **API format**: JSON
 
 ## License
@@ -192,4 +194,4 @@ This integration uses public open data from ČHMÚ.
 
 ## Support
 
-For issues and feature requests, visit: https://github.com/lipelix/home-assistant
+For issues and feature requests, visit: https://github.com/lipelix/home-assistant-chmu-weather/issues
