@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-10-14
+
+### Fixed
+- Today's daily tile no longer loses its low from about noon onwards. The
+  model's overnight minimum covers 18Z-06Z, so only the 00Z run carries one for
+  today; the 06Z, 12Z and 18Z runs left it empty, and Home Assistant's weather
+  card then printed the high twice. Once the night is over, the low is now the
+  minimum the station actually measured between 00Z and 06Z - a measurement,
+  not an estimate. Later days are unchanged.
+
+### Documentation
+- README: a "How far ahead" table explaining why the forecast reaches 62-70
+  hours hourly and 3 days daily, and why nothing past that is offered; shorter
+  feature sections; screenshots retaken on Home Assistant 2026.10.
+
 ## [1.8.0] - 2026-09-27
 
 ### Added
