@@ -4,7 +4,7 @@
 
 🇬🇧 **Home Assistant integration providing weather data from Czech Hydrometeorological Institute (ČHMÚ) meteorological stations. Primarily intended for Czech audience due to the geographic proximity of weather stations.**
 
-![Brno weather station](assets/brno_sensor_teaser.png)
+![Weather entity with the per-station forecast next to the measured sensors](assets/weather-forecast-dashboard.png)
 
 ---
 
@@ -40,62 +40,47 @@ A Home Assistant integration to fetch weather data from ČHMÚ (Czech Hydrometeo
 ## Configuration
 
 The integration is configured via the UI (Config Flow). No YAML configuration is needed.
+The station nearest to your Home location is pre-selected.
+
+![Config flow with the nearest station pre-selected](assets/weather-config-flow.png)
 
 ## Features
 
-- Fetches weather data from all ČHMÚ stations publishing 10-minute data —
-  the 40 professional WMO stations plus ~430 automatic stations
-- Provides temperature, humidity, pressure, precipitation, wind speed and
-  wind direction, plus the ČHMÚ text forecast for the Czech Republic
-- A weather entity with a **per-station forecast**: 72 hours hourly and 3 days
-  daily, from the ČHMÚ ALADIN 1 km model sampled at your station's coordinates
-- Creates only the sensors a station actually measures (many automatic
-  stations report precipitation only)
-- Pre-selects the station nearest to your Home Assistant location
-- Keeps every 10-minute measurement as **hourly statistics**, not just the
-  newest one (see below)
-- Easy configuration through the Home Assistant UI
+- Data from all ~475 ČHMÚ stations publishing 10-minute measurements; the
+  nearest one is pre-selected
+- Sensors for temperature, humidity, pressure, precipitation, wind speed and
+  direction (only those the station measures), plus the national text forecast
+- A weather entity with a **per-station forecast** from the ČHMÚ ALADIN 1 km
+  model - see [How far ahead](#how-far-ahead)
+- Every 10-minute measurement kept as **hourly statistics**
 
 ### Hourly statistics
 
-ČHMÚ measures every 10 minutes but publishes an hour's six measurements in one
-go, so only the newest one can become the sensor's state — the other five used
-to be thrown away. They are now kept as long-term statistics, one row per hour
-carrying that hour's real mean, minimum and maximum.
-
-They appear in the statistics picker (for example in a Statistics graph card)
-as `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, named after your
-station. Nothing needs configuring; a recorder has to be enabled, which it is
-in a default Home Assistant installation.
-
-Precipitation is not included, and the five extra readings cannot be shown on
-the sensor's own history graph: Home Assistant can only store imported
-statistics at whole hours, and it has no way to backdate a sensor state.
+ČHMÚ publishes an hour's six 10-minute readings at once, so only the newest can
+become the sensor state. The rest are kept as hourly statistics (mean, min, max)
+named `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, ready for a
+Statistics graph card. Precipitation is not included.
 
 ### Where the forecast comes from
 
-ČHMÚ publishes forecasts only as national prose for 14 regions or as raw model
-output — roughly 70 MB of GRIB per run, which no integration can download every
-hour. The national text is up to 10 °C off for mountain stations, so this
-integration does not use it for the forecast.
+ČHMÚ's raw model output is ~70 MB per run, too much for Home Assistant to
+download. A [job in this repository](.github/workflows/forecast-data.yml)
+samples each new ALADIN CZ_1km run at ~750 station coordinates and publishes
+~1.5 kB per station on GitHub Pages; your Home Assistant fetches only its own
+station's file. No account, token or analytics. A forecast older than 18 hours
+logs a warning, a model run older than 48 hours is refused. Details in
+[`ARCHITECTURE.md`](custom_components/chmu/ARCHITECTURE.md).
 
-Instead a scheduled job in this repository
-([`.github/workflows/forecast-data.yml`](.github/workflows/forecast-data.yml))
-downloads one ALADIN CZ_1km run, samples the ~1 km grid at all 758 station
-coordinates and publishes about 1.5 kB per station as a static site. Your Home
-Assistant fetches only its own station's file, and revalidates with an ETag so
-an unchanged forecast transfers no body at all.
+### How far ahead
 
-The request carries no account, no token and no identifier beyond a
-User-Agent. GitHub Pages logs it the way any web server logs a request; this
-project adds nothing on top - no analytics, no counters, no personal data, and
-no server of its own to collect them on. If the job ever stops, the integration
-warns once the data it is serving is 18 hours old and refuses a model run older
-than 48 hours rather than quietly showing a week old one. The measured sensors
-keep working either way.
+| Forecast | Available | Why |
+|---|---|---|
+| Current conditions | every 10 minutes | Measured at the station, not modelled. |
+| Hourly | 62–70 hours | ALADIN runs every 6 hours and reaches 72 hours ahead, but each run is published 3–4½ hours after it starts. |
+| Daily | 3 days (4 in the evening) | A day is shown only when the model covers its afternoon high. Once the model run no longer covers last night, today's low is the minimum the station measured. |
+| Beyond 3 days | not offered | ČHMÚ's longer forecast is national only and ignores altitude (~10 °C between Sněžka and Plzeň). No data beats a guess. |
 
-See [`custom_components/chmu/ARCHITECTURE.md`](custom_components/chmu/ARCHITECTURE.md)
-for the pipeline in detail.
+![More-info dialog with the hourly forecast](assets/weather-forecast-hourly.png)
 
 ## Development
 
