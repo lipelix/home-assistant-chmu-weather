@@ -262,6 +262,45 @@ async def test_daily_forecast_is_served(hass, setup_entry):
     assert first["wind_speed"] == pytest.approx(18.0, abs=0.2)
 
 
+async def test_todays_missing_low_is_filled_from_the_measurements(
+    hass, forecast_response, measured_response
+):
+    """A run that starts after the night gets today's low from the station."""
+    document = _published_document(RUN)
+    del document["daily"][0]["templow"]
+    forecast_response.return_value.json.return_value = document
+    measured_response.return_value = {
+        **MEASURED,
+        "history": {
+            "temperature": [
+                ["2026-09-08T03:00:00Z", 9.8],
+                ["2026-09-08T06:00:00Z", 10.5],
+                ["2026-09-08T10:00:00Z", 20.1],
+            ]
+        },
+    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Plzeň, Mikulka",
+        data={"station_id": "11450", "station_name": "Plzeň, Mikulka"},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    result = await hass.services.async_call(
+        "weather",
+        "get_forecasts",
+        {"entity_id": "weather.plzen_mikulka", "type": "daily"},
+        blocking=True,
+        return_response=True,
+    )
+
+    forecast = result["weather.plzen_mikulka"]["forecast"]
+    assert forecast[0]["templow"] == 9.8
+    assert forecast[1]["templow"] == 11.0
+
+
 async def test_hourly_forecast_is_served(hass, setup_entry):
     """The hourly forecast keeps the current hour and drops nothing after it."""
     result = await hass.services.async_call(
