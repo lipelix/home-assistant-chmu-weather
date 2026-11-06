@@ -4,8 +4,8 @@
 
 **Česky:** Skutečně naměřená data z nejbližší stanice ČHMÚ a předpověď modelu ALADIN 1 km přímo pro místo stanice. Každých 10 minut, bez registrace a bez API klíče.
 
-[![Open in the Home Assistant Marketplace](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lipelix&repository=home-assistant-chmu-weather&category=integration)
-[![Add the integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=chmu)
+[![Open Marketplace repository on My Home Assistant](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lipelix&repository=home-assistant-chmu-weather&category=integration)
+[![Add integration to My Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=chmu)
 
 [![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz)
 [![GitHub Release](https://img.shields.io/github/v/release/lipelix/home-assistant-chmu-weather)](https://github.com/lipelix/home-assistant-chmu-weather/releases)
@@ -13,7 +13,7 @@
 
 ## What you get
 
-<img align="right" src="https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-bar-card-detail.jpg" alt="Weather Bar Card detail on a phone, showing ČHMÚ data for Plzeň, Mikulka" width="320">
+<img align="right" src="https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-bar-card-detail.jpg" alt="Weather Bar Card detail on a phone, showing ČHMÚ data for Plzeň, Mikulka" width="320" height="532">
 
 One device per station:
 
@@ -27,7 +27,7 @@ One device per station:
 
 Sensors are created only for what the station measures. Each 10-minute measurement is also kept as hourly statistics.
 
-*Pictured: the weather entity in [Weather Bar Card](#make-it-look-great-weather-bar-card).*
+*Pictured: the weather entity in [Weather Bar Card](https://github.com/eMalinos/weather-bar-card).*
 
 ## Why this one
 
@@ -38,7 +38,11 @@ Sensors are created only for what the station measures. Each 10-minute measureme
 
 ## Make it look great: Weather Bar Card
 
-The weather entity works with any weather card. It pairs best with [**Weather Bar Card**](https://github.com/eMalinos/weather-bar-card): a full-width bar with a photo of the current weather, and a detail with an hourly curve, current conditions and the daily forecast. Because this integration provides an hourly forecast, the card's hourly curve can reach almost three days ahead.
+The weather entity works with any weather card, including the built-in ones:
+
+![Built-in weather forecast and entities cards showing ČHMÚ data](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-forecast-dashboard.png)
+
+It pairs best with [**Weather Bar Card**](https://github.com/eMalinos/weather-bar-card): a full-width bar with a photo of the current weather, and a detail with an hourly curve, current conditions and the daily forecast. Because this integration provides an hourly forecast, the card's hourly curve can reach almost three days ahead.
 
 ## Installation
 
@@ -46,9 +50,9 @@ The weather entity works with any weather card. It pairs best with [**Weather Ba
 
 ČHMÚ Weather is in the HACS default store, which Home Assistant now shows as its Marketplace. No custom repository needed.
 
-1. Use the **Marketplace** button above, or search for **ČHMÚ Weather** in the Marketplace (HACS).
+1. Click **Open Marketplace repository** above, or search for **ČHMÚ Weather** in the Marketplace (HACS).
 2. Click **Download**, then restart Home Assistant.
-3. Click **Add the integration** above, or go to **Settings → Devices & services → Add integration** and search for **ČHMÚ Weather**.
+3. Click **Add integration** above, or go to **Settings → Devices & services → Add integration** and search for **ČHMÚ Weather**.
 4. Confirm the pre-selected nearest station, or pick another one.
 
 ![Config flow with the nearest station pre-selected](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-config-flow.png)
@@ -58,13 +62,7 @@ The weather entity works with any weather card. It pairs best with [**Weather Ba
 1. Copy `custom_components/chmu` into your Home Assistant `config/custom_components/` directory.
 2. Restart Home Assistant and add **ČHMÚ Weather** under **Settings → Devices & services**.
 
-## Hourly statistics
-
-Hourly statistics (mean, min, max) are named `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, ready for a Statistics graph card. Precipitation is not included in them.
-
 ## How far ahead
-
-![Weather entity with the per-station forecast next to the measured sensors](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-forecast-dashboard.png)
 
 | Forecast | Available | Why |
 |---|---|---|
@@ -78,6 +76,10 @@ Hourly statistics (mean, min, max) are named `chmu:{station}_{element}`, e.g. `c
 ## Where the forecast comes from
 
 ČHMÚ's raw model output is ~70 MB per run, too much for Home Assistant to download. A [job in this repository](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/.github/workflows/forecast-data.yml) samples each new ALADIN CZ_1km run at ~750 station coordinates and publishes ~1.5 kB per station on GitHub Pages; your Home Assistant fetches only its own station's file. A forecast older than 18 hours logs a warning, a model run older than 48 hours is refused. Details in [`ARCHITECTURE.md`](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/custom_components/chmu/ARCHITECTURE.md).
+
+## Hourly statistics
+
+Each 10-minute measurement is stored as hourly statistics (mean, min, max) named `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, ready for a Statistics graph card. Precipitation is not included.
 
 ## Support
 
