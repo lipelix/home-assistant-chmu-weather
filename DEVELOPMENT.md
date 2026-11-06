@@ -20,6 +20,15 @@ This guide explains how to set up your local development environment and run che
    pre-commit install
    ```
 
+## Running Tests
+
+```bash
+pytest tests/ -v
+```
+
+The suite covers the API helpers, data parsing, the forecast and the hourly
+statistics. Pre-commit runs it before each commit.
+
 ## Linting
 
 This project uses [Ruff](https://github.com/astral-sh/ruff) for linting and formatting, and [Pyright](https://github.com/microsoft/pyright) for type checking.

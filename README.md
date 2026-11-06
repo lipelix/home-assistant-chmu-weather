@@ -1,77 +1,70 @@
-# ČHMÚ Weather Home Assistant Integration
+# ČHMÚ Weather for Home Assistant
 
-🇨🇿 **Integrace pro Home Assistant poskytující data z meteorologických stanic Českého hydrometeorologického ústavu (ČHMÚ). Primárně určeno pro české uživatele z důvodu geografické dostupnosti stanic.**
+**Real measurements from the official Czech weather station nearest you, and a 1 km forecast for that exact spot.** Every 10 minutes, no account, no API key.
 
-🇬🇧 **Home Assistant integration providing weather data from Czech Hydrometeorological Institute (ČHMÚ) meteorological stations. Primarily intended for Czech audience due to the geographic proximity of weather stations.**
+**Česky:** Skutečně naměřená data z nejbližší stanice ČHMÚ a předpověď modelu ALADIN 1 km přímo pro místo stanice. Každých 10 minut, bez registrace a bez API klíče.
 
-![Weather entity with the per-station forecast next to the measured sensors](assets/weather-forecast-dashboard.png)
+[![Open in the Home Assistant Marketplace](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lipelix&repository=home-assistant-chmu-weather&category=integration)
+[![Add the integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=chmu)
 
----
-
-A Home Assistant integration to fetch weather data from ČHMÚ (Czech Hydrometeorological Institute).
-
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz)
 [![GitHub Release](https://img.shields.io/github/v/release/lipelix/home-assistant-chmu-weather)](https://github.com/lipelix/home-assistant-chmu-weather/releases)
 [![CI](https://github.com/lipelix/home-assistant-chmu-weather/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lipelix/home-assistant-chmu-weather/actions/workflows/ci.yml)
 
+## What you get
+
+<img align="right" src="https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-bar-card-detail.jpg" alt="Weather Bar Card detail on a phone, showing ČHMÚ data for Plzeň, Mikulka" width="320">
+
+One device per station:
+
+- **Weather**: current conditions, hourly forecast for 62–70 hours, daily for 3 days
+- **Temperature**
+- **Humidity**
+- **Pressure**
+- **Precipitation**
+- **Wind speed** and **wind direction**
+- **Weather description**: the national ČHMÚ text forecast
+
+Sensors are created only for what the station measures. Each 10-minute measurement is also kept as hourly statistics.
+
+*Pictured: the weather entity in [Weather Bar Card](#make-it-look-great-weather-bar-card).*
+
+## Why this one
+
+- **Measured, not modelled.** Temperature, humidity, pressure, rain and wind come from one of ~475 ČHMÚ stations, refreshed every 10 minutes. The station nearest your Home location is picked for you.
+- **A forecast for your station, not for the country.** ČHMÚ's ALADIN model at 1 km resolution, sampled at your station's coordinates: 62–70 hours hourly and 3 days daily. Altitude counts: a hilltop station and the town below it get their own numbers.
+- **Every measurement kept.** All six 10-minute readings of each hour are stored as hourly statistics (mean, min, max), so graphs show the whole day, not one point per hour.
+- **Nothing to configure.** Set up from the UI in one step. No account, token, YAML or analytics.
+
+## Make it look great: Weather Bar Card
+
+The weather entity works with any weather card. It pairs best with [**Weather Bar Card**](https://github.com/eMalinos/weather-bar-card): a full-width bar with a photo of the current weather, and a detail with an hourly curve, current conditions and the daily forecast. Because this integration provides an hourly forecast, the card's hourly curve can reach almost three days ahead.
+
 ## Installation
 
-### HACS (Recommended)
+### Marketplace / HACS (recommended)
 
-1. Open HACS in your Home Assistant instance
-2. Click on "Integrations"
-3. Click the three dots in the top right corner
-4. Select "Custom repositories"
-5. Add this repository URL: `https://github.com/lipelix/home-assistant-chmu-weather`
-6. Select category: `Integration`
-7. Click "Add"
-8. Find "ČHMÚ Weather" in the integration list and click "Download"
-9. Restart Home Assistant
-10. Go to Settings → Devices & Services → Add Integration
-11. Search for "ČHMÚ Weather" and follow the configuration steps
+ČHMÚ Weather is in the HACS default store, which Home Assistant now shows as its Marketplace. No custom repository needed.
 
-### Manual Installation
+1. Use the **Marketplace** button above, or search for **ČHMÚ Weather** in the Marketplace (HACS).
+2. Click **Download**, then restart Home Assistant.
+3. Click **Add the integration** above, or go to **Settings → Devices & services → Add integration** and search for **ČHMÚ Weather**.
+4. Confirm the pre-selected nearest station, or pick another one.
 
-1. Copy the `custom_components/chmu` directory to your Home Assistant `config/custom_components/` directory
-2. Restart Home Assistant
-3. Go to Settings → Devices & Services → Add Integration
-4. Search for "ČHMÚ Weather" and follow the configuration steps
+![Config flow with the nearest station pre-selected](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-config-flow.png)
 
-## Configuration
+### Manual
 
-The integration is configured via the UI (Config Flow). No YAML configuration is needed.
-The station nearest to your Home location is pre-selected.
+1. Copy `custom_components/chmu` into your Home Assistant `config/custom_components/` directory.
+2. Restart Home Assistant and add **ČHMÚ Weather** under **Settings → Devices & services**.
 
-![Config flow with the nearest station pre-selected](assets/weather-config-flow.png)
+## Hourly statistics
 
-## Features
+Hourly statistics (mean, min, max) are named `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, ready for a Statistics graph card. Precipitation is not included in them.
 
-- Data from all ~475 ČHMÚ stations publishing 10-minute measurements; the
-  nearest one is pre-selected
-- Sensors for temperature, humidity, pressure, precipitation, wind speed and
-  direction (only those the station measures), plus the national text forecast
-- A weather entity with a **per-station forecast** from the ČHMÚ ALADIN 1 km
-  model - see [How far ahead](#how-far-ahead)
-- Every 10-minute measurement kept as **hourly statistics**
+## How far ahead
 
-### Hourly statistics
-
-ČHMÚ publishes an hour's six 10-minute readings at once, so only the newest can
-become the sensor state. The rest are kept as hourly statistics (mean, min, max)
-named `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, ready for a
-Statistics graph card. Precipitation is not included.
-
-### Where the forecast comes from
-
-ČHMÚ's raw model output is ~70 MB per run, too much for Home Assistant to
-download. A [job in this repository](.github/workflows/forecast-data.yml)
-samples each new ALADIN CZ_1km run at ~750 station coordinates and publishes
-~1.5 kB per station on GitHub Pages; your Home Assistant fetches only its own
-station's file. No account, token or analytics. A forecast older than 18 hours
-logs a warning, a model run older than 48 hours is refused. Details in
-[`ARCHITECTURE.md`](custom_components/chmu/ARCHITECTURE.md).
-
-### How far ahead
+![Weather entity with the per-station forecast next to the measured sensors](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-forecast-dashboard.png)
 
 | Forecast | Available | Why |
 |---|---|---|
@@ -80,45 +73,18 @@ logs a warning, a model run older than 48 hours is refused. Details in
 | Daily | 3 days (4 in the evening) | A day is shown only when the model covers its afternoon high. Once the model run no longer covers last night, today's low is the minimum the station measured. |
 | Beyond 3 days | not offered | ČHMÚ's longer forecast is national only and ignores altitude (~10 °C between Sněžka and Plzeň). No data beats a guess. |
 
-![More-info dialog with the hourly forecast](assets/weather-forecast-hourly.png)
+![More-info dialog with the hourly forecast](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-forecast-hourly.png)
 
-## Development
+## Where the forecast comes from
 
-### Running Tests
-
-To run the tests locally:
-
-```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-pytest tests/ -v
-```
-
-The test suite includes unit tests for API helpers and data parsing. Tests are automatically run via pre-commit hooks before each commit to ensure code quality.
-
-### Code Quality
-
-Before committing, ensure your code passes linting:
-
-```bash
-./lint.sh  # Runs ruff + HACS validation
-```
-
-Pre-commit hooks will automatically run ruff and pytest on commit. To set up pre-commit hooks:
-
-```bash
-pip install pre-commit
-pre-commit install
-```
+ČHMÚ's raw model output is ~70 MB per run, too much for Home Assistant to download. A [job in this repository](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/.github/workflows/forecast-data.yml) samples each new ALADIN CZ_1km run at ~750 station coordinates and publishes ~1.5 kB per station on GitHub Pages; your Home Assistant fetches only its own station's file. A forecast older than 18 hours logs a warning, a model run older than 48 hours is refused. Details in [`ARCHITECTURE.md`](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/custom_components/chmu/ARCHITECTURE.md).
 
 ## Support
 
-If you have issues or questions, please:
-- Check the [documentation](https://github.com/lipelix/home-assistant-chmu-weather)
-- Open an [issue](https://github.com/lipelix/home-assistant-chmu-weather/issues)
+Found a bug or missing a station? Open an [issue](https://github.com/lipelix/home-assistant-chmu-weather/issues). If the integration is useful to you, a star on GitHub helps other people find it.
+
+Contributing: see [`DEVELOPMENT.md`](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/DEVELOPMENT.md) for tests, linting and pre-commit hooks.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT, see [LICENSE](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/LICENSE). Weather data: [ČHMÚ open data](https://opendata.chmi.cz).
