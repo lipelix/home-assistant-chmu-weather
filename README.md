@@ -11,9 +11,13 @@
 [![GitHub Release](https://img.shields.io/github/v/release/lipelix/home-assistant-chmu-weather)](https://github.com/lipelix/home-assistant-chmu-weather/releases)
 [![CI](https://github.com/lipelix/home-assistant-chmu-weather/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lipelix/home-assistant-chmu-weather/actions/workflows/ci.yml)
 
-## What you get
+<p align="center">
+<img src="https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-bar-card-detail.jpg" alt="Weather Bar Card detail on a phone, showing ČHMÚ data for Plzeň, Mikulka" width="320" height="532">
+<br>
+<em>The weather entity in <a href="https://github.com/eMalinos/weather-bar-card">Weather Bar Card</a>.</em>
+</p>
 
-<img align="right" src="https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-bar-card-detail.jpg" alt="Weather Bar Card detail on a phone, showing ČHMÚ data for Plzeň, Mikulka" width="320" height="532">
+## What you get
 
 One device per station:
 
@@ -26,8 +30,6 @@ One device per station:
 - **Weather description**: the national ČHMÚ text forecast
 
 Sensors are created only for what the station measures. Each 10-minute measurement is also kept as hourly statistics.
-
-*Pictured: the weather entity in [Weather Bar Card](https://github.com/eMalinos/weather-bar-card).*
 
 ## Why this one
 
