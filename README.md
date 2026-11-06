@@ -40,11 +40,7 @@ Sensors are created only for what the station measures. Each 10-minute measureme
 
 ## Make it look great: Weather Bar Card
 
-The weather entity works with any weather card, including the built-in ones:
-
-![Built-in weather forecast and entities cards showing ČHMÚ data](https://raw.githubusercontent.com/lipelix/home-assistant-chmu-weather/main/assets/weather-forecast-dashboard.png)
-
-It pairs best with [**Weather Bar Card**](https://github.com/eMalinos/weather-bar-card): a full-width bar with a photo of the current weather, and a detail with an hourly curve, current conditions and the daily forecast. Because this integration provides an hourly forecast, the card's hourly curve can reach almost three days ahead.
+The weather entity works with any weather card, including the built-in ones. It pairs best with [**Weather Bar Card**](https://github.com/eMalinos/weather-bar-card): a full-width bar with a photo of the current weather, and a detail with an hourly curve, current conditions and the daily forecast. Because this integration provides an hourly forecast, the card's hourly curve can reach almost three days ahead.
 
 ## Installation
 
