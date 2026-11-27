@@ -21,6 +21,24 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "warning": {
+        "name": "Weather warning"
+      }
+    },
+    "event": {
+      "warning_change": {
+        "name": "Warning change",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "issued": "Issued",
+              "cancelled": "Cancelled"
+            }
+          }
+        }
+      }
+    },
     "sensor": {
       "temperature": {
         "name": "Temperature"
@@ -42,6 +60,29 @@
       },
       "weather_description": {
         "name": "Weather Description"
+      },
+      "warning_level": {
+        "name": "Warning level",
+        "state": {
+          "none": "None",
+          "yellow": "Yellow (low)",
+          "orange": "Orange (high)",
+          "red": "Red (extreme)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Weather warnings",
+        "description": "ČHMÚ issues its warnings per ORP (municipality with extended powers). The station stands in **{station_orp}**. Choose another ORP if your home lies across the border of the station's ORP.",
+        "data": {
+          "orp": "ORP for warnings"
+        },
+        "data_description": {
+          "orp": "Changing it reloads the station."
+        }
       }
     }
   }

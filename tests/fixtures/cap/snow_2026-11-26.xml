@@ -1,0 +1,2016 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.0.203.0.CZ.261126090619.XOCZ50_OKPR_000420</identifier>
+  <sender>chmi@chmi.cz</sender>
+  <sent>2026-11-26T10:06:19+01:00</sent>
+  <status>Actual</status>
+  <msgType>Update</msgType>
+  <scope>Public</scope>
+  <code>SIVS:CHMI/111/89/2018</code>
+  <references>chmi@chmi.cz,2.49.0.0.203.0.CZ.261125103248.XOCZ50_OKPR_000419,2026-11-25T11:32:48+01:00</references>
+  <incidents />
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před vysokými teplotami ovlivňujícími hospodářství a infrastrukturu</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Heat Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před nízkými teplotami ovlivňujícími hospodářství a infrastrukturu</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Cold Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před vysokými teplotami ovlivňujícími zdraví člověka</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Heat Stress Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před nízkými teplotami ovlivňujícími zdraví člověka</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Cold Stress Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před větrem</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Wind Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před sněhem</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <expires>2026-11-26T17:00:00+01:00</expires>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <parameter>
+      <valueName>eventEndingTime</valueName>
+      <value>2026-11-26T17:00:00+01:00</value>
+    </parameter>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Snow Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <expires>2026-11-26T17:00:00+01:00</expires>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <parameter>
+      <valueName>eventEndingTime</valueName>
+      <value>2026-11-26T17:00:00+01:00</value>
+    </parameter>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Rizikové sněhové jevy</event>
+    <responseType>Prepare</responseType>
+    <responseType>Execute</responseType>
+    <urgency>Future</urgency>
+    <severity>Moderate</severity>
+    <certainty>Likely</certainty>
+    <audience>veřejnost, HZS, web, Meteoalarm</audience>
+    <eventCode>
+      <valueName>SIVS</valueName>
+      <value>VI.1</value>
+    </eventCode>
+    <onset>2026-11-26T17:00:00+01:00</onset>
+    <expires>2026-11-27T09:00:00+01:00</expires>
+    <senderName>ČHMÚ, Štefan Handžák</senderName>
+    <description>Sněžení s tvorbou sněhové pokrývky o výšce 3 až 10 cm. Pravděpodobné komplikace v silniční dopravě. Hůře sjízdné a schůdné trasy a komunikace, zhoršená viditelnost, omezení v řízení vozidla. Předpoklad omezení provozu na některých komunikacích, zpoždění spojů a pravděpodobný výskyt dopravních nehod.</description>
+    <instruction>Jezdit a chodit velmi opatrně, přizpůsobit jízdu stavu komunikace. Sledovat dopravní zpravodajství. Nutnou výbavou jsou zimní pneumatiky se zákonem stanovenou minimální hloubkou dezénu pro zimní podmínky, na horách i sněhové řetězy. Na horách dodržovat pokyny Horské služby.</instruction>
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <parameter>
+      <valueName>situation</valueName>
+      <value>Počasí u nás bude ovlivňovat tlaková níže nad severní Itálií.</value>
+    </parameter>
+    <parameter>
+      <valueName>eventEndingTime</valueName>
+      <value>2026-11-27T09:00:00+01:00</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_level</valueName>
+      <value>2; yellow; Moderate</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_type</valueName>
+      <value>2; snow-ice</value>
+    </parameter>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Moderate Snow Related Impact</event>
+    <responseType>Prepare</responseType>
+    <responseType>Execute</responseType>
+    <urgency>Future</urgency>
+    <severity>Moderate</severity>
+    <certainty>Likely</certainty>
+    <audience>public, FRS, website, Meteoalarm</audience>
+    <eventCode>
+      <valueName>SIVS</valueName>
+      <value>VI.1</value>
+    </eventCode>
+    <onset>2026-11-26T17:00:00+01:00</onset>
+    <expires>2026-11-27T09:00:00+01:00</expires>
+    <senderName>CHMI, Štefan Handžák</senderName>
+    <description>Snow cover formation. A combination of powder snow and stronger winds will cause formation of snow drifts.
+
+Complications in road transport. Travel disruptions due to route closures, vehicle collisions (accumulated snow, reduced visibility).</description>
+    <instruction>Drive and walk carefully. Stay informed of the driving conditions. Mandatory equipment: winter tires with sufficient tread depth, snow chains in mountain areas. In the mountains, follow instructions of the Mountain Rescue Service.</instruction>
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <parameter>
+      <valueName>situation</valueName>
+      <value>Počasí u nás bude ovlivňovat tlaková níže nad severní Itálií.</value>
+    </parameter>
+    <parameter>
+      <valueName>eventEndingTime</valueName>
+      <value>2026-11-27T09:00:00+01:00</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_level</valueName>
+      <value>2; yellow; Moderate</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_type</valueName>
+      <value>2; snow-ice</value>
+    </parameter>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před sněhem</event>
+    <responseType>None</responseType>
+    <urgency>Future</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-27T09:00:00+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Snow Warning</event>
+    <responseType>None</responseType>
+    <urgency>Future</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-27T09:00:00+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před sněhem</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Plzeňský kraj (Blovice, Domažlice, Horažďovice, Horšovský Týn, Klatovy, Kralovice, Nepomuk, Nýřany, Plzeň, Přeštice, Rokycany, Stod, Stříbro, Tachov)</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Snow Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Plzeňský kraj (Blovice, Domažlice, Horažďovice, Horšovský Týn, Klatovy, Kralovice, Nepomuk, Nýřany, Plzeň, Přeštice, Rokycany, Stod, Stříbro, Tachov)</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před sněhem</event>
+    <responseType>None</responseType>
+    <urgency>Future</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-27T06:00:00+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Jihočeský kraj (České Budějovice, Český Krumlov, Dačice, Jindřichův Hradec, Kaplice, Prachatice, Soběslav, Tábor, Trhové Sviny, Třeboň, Týn nad Vltavou)</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Snow Warning</event>
+    <responseType>None</responseType>
+    <urgency>Future</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-27T06:00:00+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Jihočeský kraj (České Budějovice, Český Krumlov, Dačice, Jindřichův Hradec, Kaplice, Prachatice, Soběslav, Tábor, Trhové Sviny, Třeboň, Týn nad Vltavou)</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Velmi rizikové sněhové jevy</event>
+    <responseType>Prepare</responseType>
+    <responseType>Execute</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Severe</severity>
+    <certainty>Likely</certainty>
+    <audience>veřejnost, HZS, web, Meteoalarm</audience>
+    <eventCode>
+      <valueName>SIVS</valueName>
+      <value>VI.2</value>
+    </eventCode>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <expires>2026-11-27T06:00:00+01:00</expires>
+    <senderName>ČHMÚ, Štefan Handžák</senderName>
+    <description>Vydatné sněžení s tvorbou vysoké sněhové pokrývky o výšce 8 až 20 cm. Riziko silného sněžení se sníženou dohledností a rychlou tvorbou sněhové pokrývky 2 cm/1h. Četné komplikace v dopravě, energetice a ve službách. Špatně sjízdné a schůdné trasy a komunikace, špatná viditelnost, řízení vozidla problematické. Omezení nebo přerušení provozu na velkém počtu dopravních cest, zvýšené množství uzavírek, výluk, zpoždění spojů a zvýšený výskyt dopravních nehod. Riziko škod na stavbách, narušení statiky plochých střech. Riziko úrazu v důsledku pádu sněhu ze střech. Riziko lámání větví stromů a pádu na elektrická a trakční vedení, následné výpadky v dodávkách elektřiny. Částečné omezení zásobování a služeb.</description>
+    <instruction>Omezit nebo přeplánovat cestování, pokud je to možné. Vyjíždět autem jen v nutných případech a počítat s prodloužením doby jízdy. Sledovat dopravní zpravodajství. Nutnou výbavou jsou zimní pneumatiky se zákonem stanovenou minimální hloubkou dezénu pro zimní podmínky a sněhové řetězy. Zajistit úklid sněhu ze střech. Dbát na bezpečnost s ohledem na nebezpečí pádu většího objemu sněhu ze střech. Nepřibližovat se k spadlým drátům elektrického vedení a být připraven na možné výpadky elektřiny. Na horách omezit túry, sledovat a dodržovat pokyny Horské služby. Aktuální situaci sledovat na výstupu z meteorologických radarů v mobilní aplikaci ČHMÚ nebo na webových stránkách www.chmi.cz.</instruction>
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <parameter>
+      <valueName>situation</valueName>
+      <value>Počasí u nás bude ovlivňovat tlaková níže nad severní Itálií.</value>
+    </parameter>
+    <parameter>
+      <valueName>eventEndingTime</valueName>
+      <value>2026-11-27T06:00:00+01:00</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_level</valueName>
+      <value>3; orange; Severe</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_type</valueName>
+      <value>2; snow-ice</value>
+    </parameter>
+    <area>
+      <areaDesc>Jihočeský kraj (Dačice, Jindřichův Hradec, Kaplice, Trhové Sviny, Třeboň)</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Major Snow Related Impact</event>
+    <responseType>Prepare</responseType>
+    <responseType>Execute</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Severe</severity>
+    <certainty>Likely</certainty>
+    <audience>public, FRS, website, Meteoalarm</audience>
+    <eventCode>
+      <valueName>SIVS</valueName>
+      <value>VI.2</value>
+    </eventCode>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <expires>2026-11-27T06:00:00+01:00</expires>
+    <senderName>CHMI, Štefan Handžák</senderName>
+    <description>Heavy snowfall with a high snow cover. A combination of powder snow and fresh wind will cause formation of snow drifts and snowbanks. Risk of heavy snowfall with reduced visibility and rapid snow accumulation. Risk to buildings due to a thick layer of wet snow.
+
+Numerous complications in transport, energy industry, and services. Travel dangerous due to accumulated snow and reduced visibility, route closures, and multiple vehicle collisions. Long travel delays. Property and tree damage, subsequent power outages. Roofs at increased risk of collapsing under the weight of snow. Essential services disruption, delays for emergency responders.</description>
+    <instruction>Avoid driving if possible. Drive and walk very carefully. When travelling, monitor the traffic situation. Stay informed of the driving conditions. Mandatory equipment: winter tires with sufficient tread depth and snow chains. Avoid forests and trees – danger of falling trees or branches. Be aware of rooftop avalanches. Be prepared for possible power outages. In the mountains, follow instructions of the Mountain Rescue Service.</instruction>
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <parameter>
+      <valueName>situation</valueName>
+      <value>Počasí u nás bude ovlivňovat tlaková níže nad severní Itálií.</value>
+    </parameter>
+    <parameter>
+      <valueName>eventEndingTime</valueName>
+      <value>2026-11-27T06:00:00+01:00</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_level</valueName>
+      <value>3; orange; Severe</value>
+    </parameter>
+    <parameter>
+      <valueName>awareness_type</valueName>
+      <value>2; snow-ice</value>
+    </parameter>
+    <area>
+      <areaDesc>Jihočeský kraj (Dačice, Jindřichův Hradec, Kaplice, Trhové Sviny, Třeboň)</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před námrazovými jevy na pozemních komunikacích</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Slippery Roads Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před námrazovými jevy na nadzemních objektech</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Ice Load Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před konvektivními bouřemi</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Thunderstorms Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před deštěm</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Rain Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před povodňovými jevy</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://hydro.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Floods Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://hydro.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před nebezpečím požárů</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://www.firerisk.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Fires Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://www.firerisk.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Env</category>
+    <event>Žádná výstraha před přízemním ozónem</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=O3</web>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Env</category>
+    <event>Minor Ground-Level Ozone Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=O3</web>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Env</category>
+    <event>Žádná výstraha před prachem</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=PM10</web>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Env</category>
+    <event>Minor Dust Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=PM10</web>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Env</category>
+    <event>Žádná výstraha před oxidem dusičitým</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=NO2</web>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Env</category>
+    <event>Minor Nitrogen Dioxide Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=NO2</web>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Env</category>
+    <event>Žádná výstraha před oxidem siřičitým</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=SO2</web>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Env</category>
+    <event>Minor Sulfur Dioxide Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://ovzdusi.chmi.cz/SVRS.php?showPol=SO2</web>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Aglomerace Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádná výstraha před jiným jevem</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>Minor Unclassified Weather Hazard Warning</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>cs</language>
+    <category>Met</category>
+    <event>Žádný výhled nebezpečných jevů</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>ČHMÚ</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>No Outlook of Dangerous Phenomena</event>
+    <responseType>None</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Unlikely</certainty>
+    <onset>2026-11-26T10:04:55+01:00</onset>
+    <senderName>CHMI</senderName>
+    <description />
+    <instruction />
+    <web>https://vystrahy-cr.chmi.cz/</web>
+    <area>
+      <areaDesc>Hlavní město Praha</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>1100</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ01100</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Jihočeský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3104</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03104</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>Plzeňský kraj</areaDesc>
+      <geocode>
+        <valueName>CISORP</valueName>
+        <value>3209</value>
+      </geocode>
+      <geocode>
+        <valueName>EMMA_ID</valueName>
+        <value>CZ03209</value>
+      </geocode>
+    </area>
+  </info>
+</alert>

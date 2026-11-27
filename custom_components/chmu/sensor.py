@@ -19,12 +19,14 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import ChmuConfigEntry
+from .alerts import LEVEL_NONE, LEVELS, highest_level
 from .const import (
     CONF_STATION_ELEMENTS,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     DOMAIN,
 )
+from .warning_entity import ChmuWarningEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,6 +57,10 @@ async def async_setup_entry(
     # The text forecast is issued for the whole country, not per station.
     sensors.append(
         ChmuWeatherDescriptionSensor(coordinator, entry, station_id, station_name)
+    )
+
+    sensors.append(
+        ChmuWarningLevelSensor(entry.runtime_data.warnings_coordinator, entry)
     )
 
     async_add_entities(sensors)
@@ -292,3 +298,28 @@ SENSOR_TYPES = {
     "wind_speed": ChmuWindSpeedSensor,
     "wind_direction": ChmuWindDirectionSensor,
 }
+
+
+class ChmuWarningLevelSensor(ChmuWarningEntity, SensorEntity):
+    """The highest ČHMÚ warning level in force for the station's ORP.
+
+    The colours are ČHMÚ's own: yellow (nízký stupeň nebezpečí), orange
+    (vysoký) and red (extrémní). The warnings themselves are on the binary
+    sensor.
+    """
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [LEVEL_NONE, *LEVELS]
+    _attr_translation_key = "warning_level"
+    _attr_icon = "mdi:alert-outline"
+
+    def __init__(self, coordinator, entry):
+        """Initialize the sensor."""
+        super().__init__(coordinator, entry, "warning_level")
+
+    @property
+    def native_value(self):
+        """Return the level."""
+        if self.coordinator.data is None:
+            return None
+        return highest_level(self.warnings, self.now())

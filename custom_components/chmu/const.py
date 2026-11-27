@@ -7,6 +7,14 @@ DOMAIN = "chmu"
 CONF_STATION_ID = "station_id"
 CONF_STATION_NAME = "station_name"
 CONF_STATION_ELEMENTS = "station_elements"
+# Station coordinates, stored since warnings need them to find the station's
+# ORP. Entries created earlier get them on first use (see __init__.py).
+CONF_LATITUDE = "latitude"
+CONF_LONGITUDE = "longitude"
+# Option: the ORP whose warnings to show, by CISORP code. ORP_AUTO (or no
+# option at all) means the ORP the station stands in.
+CONF_ORP = "orp"
+ORP_AUTO = "auto"
 
 # Sent by every outgoing request so ČHMÚ and GitHub Pages can attribute the
 # traffic to this integration.

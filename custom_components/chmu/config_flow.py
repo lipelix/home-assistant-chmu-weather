@@ -5,15 +5,21 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .api import get_stations_with_coords
 from .const import (
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+    CONF_ORP,
     CONF_STATION_ELEMENTS,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     DOMAIN,
+    ORP_AUTO,
 )
+from .orp import find_orp, orp_names
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,6 +109,14 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Return the options flow."""
+        return ChmuOptionsFlow()
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
@@ -130,6 +144,8 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_STATION_ID: station_id,
                     CONF_STATION_NAME: station_name,
                     CONF_STATION_ELEMENTS: station_elements,
+                    CONF_LATITUDE: station_info.get("latitude"),
+                    CONF_LONGITUDE: station_info.get("longitude"),
                 },
             )
 
@@ -217,3 +233,67 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
             description_placeholders=description_placeholders,
         )
+
+
+def _czech(name: str) -> tuple[str, str]:
+    """Sort key putting Č, Ř, Š, Ž next to C, R, S, Z, not after Z."""
+    from unicodedata import combining, normalize
+
+    plain = "".join(c for c in normalize("NFD", name) if not combining(c))
+    return (plain.casefold(), name)
+
+
+class ChmuOptionsFlow(config_entries.OptionsFlow):
+    """Choose the ORP whose warnings the entry shows.
+
+    By default it is the ORP the station stands in, which is wrong for someone
+    whose nearest station sits across an ORP border.
+    """
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Show the ORP choice."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        names = await self.hass.async_add_executor_job(orp_names)
+        station_orp = await self._station_orp_name()
+        if self.hass.config.language.lower().startswith("cs"):
+            auto_label = f"Podle stanice ({station_orp})"
+        else:
+            auto_label = f"From the station ({station_orp})"
+
+        options = [selector.SelectOptionDict(value=ORP_AUTO, label=auto_label)]
+        options += [
+            selector.SelectOptionDict(value=code, label=name)
+            for code, name in sorted(names.items(), key=lambda item: _czech(item[1]))
+        ]
+        current = self.config_entry.options.get(CONF_ORP, ORP_AUTO)
+        if current not in names:
+            current = ORP_AUTO
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_ORP, default=current): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                            sort=False,
+                        )
+                    )
+                }
+            ),
+            description_placeholders={"station_orp": station_orp},
+        )
+
+    async def _station_orp_name(self) -> str:
+        """Name the ORP the station stands in, as far as it is known."""
+        latitude = self.config_entry.data.get(CONF_LATITUDE)
+        longitude = self.config_entry.data.get(CONF_LONGITUDE)
+        if latitude is None or longitude is None:
+            return "?"
+        orp = await self.hass.async_add_executor_job(find_orp, latitude, longitude)
+        return orp.name if orp else "?"

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-11-27
+
+### Added
+- ČHMÚ weather warnings (výstrahy SIVS) for the station's ORP (#36). Each
+  station gets a **Weather warning** binary sensor (on while a warning is in
+  force, every warning that has not ended in its `warnings` attribute, the
+  outlook in `outlook`), a **Warning level** sensor (`none`, `yellow`,
+  `orange`, `red`) and a **Warning change** event entity that fires `issued`
+  as soon as ČHMÚ issues a warning, usually hours before it starts, and
+  `cancelled` when one is dropped early. States switch at each warning's exact
+  onset and end. The message is polled every 5 minutes and downloaded only
+  when ČHMÚ issues a new one, once for all stations; the open data archive
+  stands in when the primary file is unavailable.
+- The ORP comes from the station's coordinates and ORP boundaries shipped with
+  the integration (ČÚZK RÚIAN, CC BY 4.0). **Configure** on the integration
+  picks another ORP for a home across the border from its station. Stations
+  set up earlier look their coordinates up once.
+
 ## [1.8.1] - 2026-10-14
 
 ### Fixed

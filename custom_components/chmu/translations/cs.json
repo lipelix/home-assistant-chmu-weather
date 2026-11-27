@@ -21,6 +21,24 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "warning": {
+        "name": "Výstraha"
+      }
+    },
+    "event": {
+      "warning_change": {
+        "name": "Změna výstrahy",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "issued": "Vydána",
+              "cancelled": "Zrušena"
+            }
+          }
+        }
+      }
+    },
     "sensor": {
       "temperature": {
         "name": "Teplota"
@@ -42,6 +60,29 @@
       },
       "weather_description": {
         "name": "Textový popis počasí"
+      },
+      "warning_level": {
+        "name": "Stupeň výstrahy",
+        "state": {
+          "none": "Žádný",
+          "yellow": "Žlutý (nízký)",
+          "orange": "Oranžový (vysoký)",
+          "red": "Červený (extrémní)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Výstrahy",
+        "description": "ČHMÚ vydává výstrahy po ORP (obcích s rozšířenou působností). Stanice leží v ORP **{station_orp}**. Pokud bydlíte za hranicí ORP stanice, vyberte jiné.",
+        "data": {
+          "orp": "ORP pro výstrahy"
+        },
+        "data_description": {
+          "orp": "Změna znovu načte stanici."
+        }
       }
     }
   }
