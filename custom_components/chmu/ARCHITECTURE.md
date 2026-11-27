@@ -217,7 +217,9 @@ Notes on the shape of this:
   `https://opendata.chmi.cz/meteorology/weather/alerts/cap/` is used instead,
   at most every 30 minutes. The archive has no fixed name for the newest
   message and its names are reused month after month, so it is picked by
-  modification time. All config entries share one `WarningsFeed`.
+  modification time. All config entries share one `WarningsFeed`. When both
+  fail, the last message is kept for up to 3 hours, so a network blip does not
+  turn the entities unavailable.
 - **What is a warning.** The message also lists "Žádná výstraha ..." for every
   phenomenon without one, the outlook (event code `OUTLOOK`) and hydrological
   notes. A warning is an `<info>` with `awareness_level` yellow, orange or red.

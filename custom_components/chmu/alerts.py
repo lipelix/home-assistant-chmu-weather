@@ -49,6 +49,10 @@ WARNINGS_WEB = "https://vystrahy-cr.chmi.cz/"
 # share one request.
 SHARED_FETCH_WINDOW = timedelta(seconds=60)
 ARCHIVE_INTERVAL = timedelta(minutes=30)
+# A failed poll keeps serving the last message for this long. A network blip
+# must not turn the warning entities unavailable, which automations would see
+# as a change; hours without any answer must.
+KEEP_LAST_MESSAGE_FOR = timedelta(hours=3)
 REQUEST_TIMEOUT = 60
 
 CAP_NS = {"cap": "urn:oasis:names:tc:emergency:cap:1.2"}
@@ -317,6 +321,7 @@ class WarningsFeed:
         self._archive_checked: datetime | None = None
         self._archive_file: str | None = None
         self._using_archive = False
+        self._succeeded: datetime | None = None
 
     def get(self, now: datetime) -> CapMessage:
         """Return the current message, downloading it only when it changed."""
@@ -342,10 +347,25 @@ class WarningsFeed:
                         err,
                     )
                     self._using_archive = True
-                message = self._fetch_archive(now)
+                try:
+                    message = self._fetch_archive(now)
+                except WarningsUnavailable as unavailable:
+                    if (
+                        self._message is None
+                        or self._succeeded is None
+                        or now - self._succeeded > KEEP_LAST_MESSAGE_FOR
+                    ):
+                        raise
+                    _LOGGER.warning(
+                        "ČHMÚ warnings unavailable (%s), keeping the message from %s",
+                        unavailable,
+                        self._message.sent.isoformat(),
+                    )
+                    return self._message
 
             self._message = message
             self._checked = now
+            self._succeeded = now
             return message
 
     def _fetch_latest(self) -> CapMessage:
