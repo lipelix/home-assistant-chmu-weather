@@ -205,7 +205,7 @@ geometry.
 | `orp.py` + `data/orp.json.gz` | Finds the ORP a station stands in (ray casting, nearest ORP within 5 km as fallback) |
 | `tools/build_orp.py` | Rebuilds `orp.json.gz` from ČÚZK RÚIAN (CC BY 4.0) and the ČSÚ codelist 65 |
 | `warning_entity.py` | Base entity: schedules a state write at the next onset or end |
-| `binary_sensor.py`, `sensor.py`, `event.py` | Warning in force, highest level, issued / cancelled events |
+| `binary_sensor.py`, `sensor.py`, `event.py` | Warning in force, highest level and names of what is in force, issued / cancelled events |
 
 Notes on the shape of this:
 

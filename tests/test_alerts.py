@@ -25,6 +25,7 @@ from custom_components.chmu.alerts import (
     WARNINGS_URL,
     WarningsFeed,
     WarningsUnavailable,
+    active_events,
     area_warnings,
     changes,
     highest_level,
@@ -133,6 +134,24 @@ def test_the_outlook_is_kept_apart(storm_morning):
     assert len(outlooks) == 1
     assert outlooks[0].is_outlook
     assert outlooks[0].description
+
+
+def test_active_events_name_the_worst_first(storm_evening):
+    blansko, _ = storm_evening.for_area("6201", "cs")
+    assert active_events(blansko, _at("2026-07-17T17:30:00+02:00")) == [
+        "Velmi silné bouřky",
+        "Silná zátěž teplem",
+    ]
+    assert active_events(blansko, _at("2026-07-17T19:30:00+02:00")) == ["Silné bouřky"]
+    assert active_events(blansko, _at("2026-07-18T00:00:00+02:00")) == []
+
+
+def test_active_events_leave_out_what_has_not_started(snow):
+    prague, _ = snow.for_area("1100", "cs")
+    assert active_events(prague, snow.sent) == []
+    assert active_events(prague, _at("2026-11-26T18:00:00+01:00")) == [
+        "Rizikové sněhové jevy"
+    ]
 
 
 def test_next_change_is_the_nearest_onset_or_expiry(storm_evening):

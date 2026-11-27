@@ -46,6 +46,7 @@ STATION = {
 BINARY = "binary_sensor.blansko_weather_warning"
 LEVEL = "sensor.blansko_warning_level"
 EVENT = "event.blansko_warning_change"
+ACTIVE = "sensor.blansko_active_warnings"
 
 
 def local(hour: int, minute: int = 0, second: int = 0) -> datetime:
@@ -119,6 +120,8 @@ async def test_warnings_in_force_and_upcoming(hass, feed):
     assert binary.attributes["orp_code"] == "6201"
     assert binary.attributes["outlook"]
     assert hass.states.get(LEVEL).state == "yellow"
+    # Home Assistant runs in English here, so the English texts of the message.
+    assert hass.states.get(ACTIVE).state == "Moderate Heat Stress"
 
     # The first message only sets the baseline.
     assert hass.states.get(EVENT).state == STATE_UNKNOWN
@@ -136,6 +139,10 @@ async def test_a_new_message_fires_issued(hass, feed, freezer):
     assert event.attributes["active"] is True
     assert event.attributes["orp"] == "Blansko"
     assert hass.states.get(LEVEL).state == "orange"
+    assert (
+        hass.states.get(ACTIVE).state
+        == "Major Thunderstorm Impact, Moderate Heat Stress"
+    )
 
 
 async def test_a_dropped_warning_fires_cancelled(hass, feed, freezer):
@@ -166,12 +173,24 @@ async def test_the_state_follows_the_clock_without_a_download(hass, feed, freeze
     assert feed.call_count == downloads
     assert hass.states.get(LEVEL).state == "yellow"
     assert hass.states.get(BINARY).state == "on"
+    assert hass.states.get(ACTIVE).state == "Moderate Thunderstorm Impact"
 
     await _advance(hass, freezer, local(23, 59, 59))
     await _advance(hass, freezer, datetime(2026, 7, 17, 22, 0, 1, tzinfo=UTC))
     assert hass.states.get(LEVEL).state == "none"
     assert hass.states.get(BINARY).state == "off"
     assert hass.states.get(BINARY).attributes["warnings"] == []
+    assert hass.states.get(ACTIVE).state == "No warning"
+
+
+async def test_a_czech_home_assistant_gets_the_czech_names(hass, feed, freezer):
+    await hass.config.async_update(language="cs")
+    feed.return_value = EVENING
+    freezer.move_to(local(17, 10))
+    await _setup(hass, {**STATION, **BLANSKO})
+
+    active = hass.states.get("sensor.blansko_platne_vystrahy")
+    assert active.state == "Velmi silné bouřky, Silná zátěž teplem"
 
 
 async def test_an_older_entry_looks_its_coordinates_up_once(hass, feed):

@@ -19,7 +19,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import ChmuConfigEntry
-from .alerts import LEVEL_NONE, LEVELS, highest_level
+from .alerts import LEVEL_NONE, LEVELS, active_events, highest_level
 from .const import (
     CONF_STATION_ELEMENTS,
     CONF_STATION_ID,
@@ -59,9 +59,9 @@ async def async_setup_entry(
         ChmuWeatherDescriptionSensor(coordinator, entry, station_id, station_name)
     )
 
-    sensors.append(
-        ChmuWarningLevelSensor(entry.runtime_data.warnings_coordinator, entry)
-    )
+    warnings_coordinator = entry.runtime_data.warnings_coordinator
+    sensors.append(ChmuWarningLevelSensor(warnings_coordinator, entry))
+    sensors.append(ChmuActiveWarningsSensor(warnings_coordinator, entry))
 
     async_add_entities(sensors)
 
@@ -323,3 +323,35 @@ class ChmuWarningLevelSensor(ChmuWarningEntity, SensorEntity):
         if self.coordinator.data is None:
             return None
         return highest_level(self.warnings, self.now())
+
+
+class ChmuActiveWarningsSensor(ChmuWarningEntity, SensorEntity):
+    """What the warnings in force are about, in ČHMÚ's words.
+
+    The binary sensor and the level say that there is a warning and how bad it
+    is; this says what it is - "Ledovka", "Silný vítr" - where the device page,
+    history and an entity card show it without a template. Several warnings
+    are joined most severe first.
+    """
+
+    _attr_translation_key = "active_warnings"
+    _attr_icon = "mdi:alert-circle-outline"
+    _MAX_STATE_LENGTH = 255
+
+    def __init__(self, coordinator, entry):
+        """Initialize the sensor."""
+        super().__init__(coordinator, entry, "active_warnings")
+
+    @property
+    def native_value(self):
+        """Return the names of the warnings in force."""
+        if self.coordinator.data is None:
+            return None
+        events = active_events(self.warnings, self.now())
+        if not events:
+            czech = self.hass.config.language.lower().startswith("cs")
+            return "Žádná výstraha" if czech else "No warning"
+        value = ", ".join(events)
+        if len(value) <= self._MAX_STATE_LENGTH:
+            return value
+        return f"{value[: self._MAX_STATE_LENGTH - 1]}…"
