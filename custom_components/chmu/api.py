@@ -38,6 +38,17 @@ class NoStationData(Exception):
     """
 
 
+class StationsUnavailable(Exception):
+    """The station list could not be downloaded or holds no station.
+
+    There used to be a built-in list of three stations to fall back on, but a
+    list that silently shrinks from ~475 stations to three makes the config
+    flow pre-select a wrong "nearest" station, and one of its ids belonged to
+    another station (11782 is Mošnov, not Brno-Tuřany). Failing visibly lets
+    the user try again instead.
+    """
+
+
 class MeasurementUnusable(Exception):
     """The newest measurement is too old to present as a current reading.
 
@@ -73,29 +84,6 @@ def _parse_timestamp(value: Any) -> datetime | None:
         return None
 
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
-
-
-# Fallback used when the station metadata cannot be downloaded.
-_FALLBACK_STATIONS = {
-    "11450": {
-        "name": "Plzeň, Mikulka",
-        "latitude": 49.764722,
-        "longitude": 13.378889,
-        "elements": ["temperature", "humidity", "precipitation", "wind_speed"],
-    },
-    "11518": {
-        "name": "Praha-Ruzyně",
-        "latitude": 50.1008,
-        "longitude": 14.26,
-        "elements": ["temperature", "humidity", "precipitation", "wind_speed"],
-    },
-    "11782": {
-        "name": "Brno-Tuřany",
-        "latitude": 49.1513,
-        "longitude": 16.6944,
-        "elements": ["temperature", "humidity", "precipitation", "wind_speed"],
-    },
-}
 
 
 def station_id_to_wsi(station_id: str) -> str:
@@ -218,6 +206,10 @@ def get_stations_with_coords() -> dict[str, dict[str, Any]]:
     Returns:
         Dict mapping station ID to station info with name, latitude, longitude
         and the list of supported sensor keys.
+
+    Raises:
+        StationsUnavailable: the metadata could not be fetched or parsed, or
+            it lists no usable station.
     """
     session = new_session()
 
@@ -261,13 +253,12 @@ def get_stations_with_coords() -> dict[str, dict[str, Any]]:
             }
 
         _LOGGER.info("Found %d stations with coordinates", len(stations))
-        return stations
-    except Exception:
-        _LOGGER.exception("Failed to fetch stations with coordinates")
-        # Fallback to a basic set with approximate coordinates
-        return {
-            station_id: dict(info) for station_id, info in _FALLBACK_STATIONS.items()
-        }
+    except Exception as err:
+        raise StationsUnavailable(f"ČHMÚ station metadata: {err}") from err
+
+    if not stations:
+        raise StationsUnavailable("ČHMÚ station metadata lists no usable station")
+    return stations
 
 
 class ChmuApi:

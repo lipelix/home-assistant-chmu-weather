@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   picks another ORP for a home across the border from its station. Stations
   set up earlier look their coordinates up once.
 
+### Fixed
+- Adding a station while the ČHMÚ station list cannot be downloaded no longer
+  offers a built-in list of three stations and pre-selects the "nearest" of
+  them. The form now says the list could not be loaded and tries again on
+  submit. One of those three also had the wrong id: "Brno-Tuřany" was 11782,
+  which is Mošnov (Brno-Tuřany is 11723), so choosing it set up Mošnov.
+
 ## [1.8.1] - 2026-10-14
 
 ### Fixed

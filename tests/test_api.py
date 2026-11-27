@@ -144,6 +144,24 @@ def test_get_stations_with_coords_retries_previous_day(mock_session):
     assert urls[3].endswith("meta1-20251220.json")
 
 
+def test_an_unreachable_station_list_is_reported(mock_session):
+    """No silent fallback: a short list would pre-select a wrong station."""
+    mock_session.get.side_effect = requests.exceptions.ConnectionError("no DNS")
+
+    with pytest.raises(api.StationsUnavailable, match="no DNS"):
+        api.get_stations_with_coords()
+
+
+def test_a_station_list_without_stations_is_reported(mock_session):
+    mock_session.get.side_effect = [
+        _http_response(200, _elements_metadata([])),
+        _http_response(200, _stations_metadata([])),
+    ]
+
+    with pytest.raises(api.StationsUnavailable, match="no usable station"):
+        api.get_stations_with_coords()
+
+
 def test_get_stations_returns_names(mock_session):
     """Simple station listing maps ids to names."""
     mock_session.get.side_effect = [

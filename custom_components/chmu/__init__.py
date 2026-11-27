@@ -14,7 +14,12 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .alerts import AreaWarnings, WarningsFeed, area_warnings
-from .api import ChmuApi, MeasurementUnusable, get_stations_with_coords
+from .api import (
+    ChmuApi,
+    MeasurementUnusable,
+    StationsUnavailable,
+    get_stations_with_coords,
+)
 from .const import CONF_LATITUDE, CONF_LONGITUDE, CONF_ORP, DOMAIN, ORP_AUTO
 from .forecast import ChmuForecastApi, ForecastUnusable, StationForecast
 from .orp import Orp, find_orp, load_orps
@@ -245,7 +250,12 @@ async def _async_resolve_orp(hass: HomeAssistant, entry: ChmuConfigEntry) -> Orp
     longitude = entry.data.get(CONF_LONGITUDE)
     if latitude is None or longitude is None:
         station_id = entry.data["station_id"]
-        stations = await hass.async_add_executor_job(get_stations_with_coords)
+        try:
+            stations = await hass.async_add_executor_job(get_stations_with_coords)
+        except StationsUnavailable as err:
+            raise UpdateFailed(
+                f"Cannot look up the coordinates of station {station_id}: {err}"
+            ) from err
         station = stations.get(station_id)
         if station is None:
             raise UpdateFailed(
