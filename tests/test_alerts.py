@@ -20,6 +20,7 @@ import pytest
 
 from custom_components.chmu.alerts import (
     ARCHIVE_INTERVAL,
+    KEEP_LAST_MESSAGE_FOR,
     WARNINGS_ARCHIVE_URL,
     WARNINGS_URL,
     WarningsFeed,
@@ -300,3 +301,23 @@ def test_both_sources_failing_is_reported():
     session.get.return_value = _response(503)
     with pytest.raises(WarningsUnavailable):
         WarningsFeed(session).get(NOW)
+
+
+def test_a_network_blip_keeps_the_last_message(caplog):
+    """Both hosts failed to resolve for a few minutes in a live run.
+
+    The entities would have gone unavailable for a poll; only an outage of
+    hours should do that.
+    """
+    snow = (CAP / "snow_2026-11-26.xml").read_bytes()
+    session = MagicMock()
+    session.get.return_value = _response(200, snow, '"v1"')
+    feed = WarningsFeed(session)
+    first = feed.get(NOW)
+
+    session.get.return_value = _response(503)
+    assert feed.get(NOW + timedelta(minutes=5)) is first
+    assert "keeping the message" in caplog.text
+
+    with pytest.raises(WarningsUnavailable):
+        feed.get(NOW + KEEP_LAST_MESSAGE_FOR + timedelta(minutes=5))

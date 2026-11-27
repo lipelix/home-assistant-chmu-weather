@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cancelled` when one is dropped early. States switch at each warning's exact
   onset and end. The message is polled every 5 minutes and downloaded only
   when ČHMÚ issues a new one, once for all stations; the open data archive
-  stands in when the primary file is unavailable.
+  stands in when the primary file is unavailable, and a short outage of both
+  keeps the last message instead of making the entities unavailable.
 - The ORP comes from the station's coordinates and ORP boundaries shipped with
   the integration (ČÚZK RÚIAN, CC BY 4.0). **Configure** on the integration
   picks another ORP for a home across the border from its station. Stations
