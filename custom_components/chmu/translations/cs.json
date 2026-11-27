@@ -10,10 +10,14 @@
         "data_description": {
           "station_id": "Nejbližší stanice měřící teplotu je předvybrána podle vaší domácí polohy. Řada automatických stanic měří pouze srážky a nabídne jen tento senzor."
         }
+      },
+      "unavailable": {
+        "title": "Meterologická stanice ČHMÚ",
+        "description": "Ověřte, že se Home Assistant dostane na opendata.chmi.cz, a odesláním to zkuste znovu."
       }
     },
     "error": {
-      "cannot_connect": "Nepodařilo se připojit k API ČHMÚ",
+      "cannot_connect": "Seznam stanic se nepodařilo načíst z ČHMÚ",
       "unknown": "Došlo k neočekávané chybě"
     },
     "abort": {

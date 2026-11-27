@@ -170,7 +170,7 @@ sensor.{station_id}_{measurement}
 Examples:
 - sensor.11406_temperature       (Praha-Libuš Temperature)
 - sensor.11406_humidity          (Praha-Libuš Humidity)
-- sensor.11782_temperature       (Brno-Tuřany Temperature)
+- sensor.11723_temperature       (Brno-Tuřany Temperature)
 ```
 
 ## Sensor States

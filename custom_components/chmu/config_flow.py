@@ -8,7 +8,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .api import get_stations_with_coords
+from .api import StationsUnavailable, get_stations_with_coords
 from .const import (
     CONF_LATITUDE,
     CONF_LONGITUDE,
@@ -117,49 +117,45 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Return the options flow."""
         return ChmuOptionsFlow()
 
+    def __init__(self) -> None:
+        """Initialize the flow."""
+        # The list the form offered, so the submitted station is looked up in
+        # what the user actually chose from instead of a second download.
+        self._stations: dict[str, dict[str, Any]] = {}
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Handle the initial step."""
-        errors = {}
-
+        """Offer the stations, nearest to the Home location pre-selected."""
         if user_input is not None:
             station_id = user_input[CONF_STATION_ID]
+            station_info = self._stations.get(station_id)
+            if station_info is None:
+                return await self.async_step_unavailable()
 
-            # Fetch stations to get the name
-            stations_with_coords = await self.hass.async_add_executor_job(
-                get_stations_with_coords
-            )
-            station_info = stations_with_coords.get(station_id, {})
-            station_name = station_info.get("name", f"Station {station_id}")
-            station_elements = station_info.get("elements", [])
-
-            # Check if already configured
             await self.async_set_unique_id(station_id)
             self._abort_if_unique_id_configured()
 
+            station_name = station_info["name"]
             return self.async_create_entry(
                 title=f"{station_name} ({station_id})",
                 data={
                     CONF_STATION_ID: station_id,
                     CONF_STATION_NAME: station_name,
-                    CONF_STATION_ELEMENTS: station_elements,
-                    CONF_LATITUDE: station_info.get("latitude"),
-                    CONF_LONGITUDE: station_info.get("longitude"),
+                    CONF_STATION_ELEMENTS: station_info["elements"],
+                    CONF_LATITUDE: station_info["latitude"],
+                    CONF_LONGITUDE: station_info["longitude"],
                 },
             )
 
-        # Fetch available stations with coordinates
         try:
-            stations_with_coords = await self.hass.async_add_executor_job(
+            self._stations = await self.hass.async_add_executor_job(
                 get_stations_with_coords
             )
-            if not stations_with_coords:
-                errors["base"] = "cannot_connect"
-        except Exception:
-            _LOGGER.exception("Failed to fetch stations")
-            errors["base"] = "cannot_connect"
-            stations_with_coords = {}
+        except StationsUnavailable as err:
+            _LOGGER.warning("Could not load the ČHMÚ station list: %s", err)
+            return await self.async_step_unavailable()
+        stations_with_coords = self._stations
 
         # Get Home Assistant location to suggest nearest station
         home_lat = self.hass.config.latitude
@@ -230,8 +226,23 @@ class ChmuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=data_schema,
-            errors=errors,
             description_placeholders=description_placeholders,
+        )
+
+    async def async_step_unavailable(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Say the station list could not be loaded; submitting tries again.
+
+        Offering a partial list instead would pre-select a station that is
+        merely the nearest of the few it holds.
+        """
+        if user_input is not None:
+            return await self.async_step_user()
+        return self.async_show_form(
+            step_id="unavailable",
+            data_schema=vol.Schema({}),
+            errors={"base": "cannot_connect"},
         )
 
 

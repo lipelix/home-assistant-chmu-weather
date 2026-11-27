@@ -23,7 +23,7 @@ docker-compose logs -f homeassistant
 5. Select your nearest weather station from the dropdown:
    - **Praha-Libuš (11406)** ← Recommended for Prague area
    - Praha-Ruzyně (11518)
-   - Brno-Tuřany (11782)
+   - Brno-Tuřany (11723)
    - Ostrava-Mošnov (11963)
    - Plzeň-Mikulka (11603)
    - And 6 more stations...

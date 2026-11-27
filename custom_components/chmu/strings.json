@@ -10,10 +10,14 @@
         "data_description": {
           "station_id": "The nearest station measuring temperature is pre-selected based on your Home location. Many automatic stations report precipitation only and expose just that sensor."
         }
+      },
+      "unavailable": {
+        "title": "ČHMÚ Weather Station",
+        "description": "Check that Home Assistant can reach opendata.chmi.cz, then submit to try again."
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to ČHMÚ API",
+      "cannot_connect": "Could not load the station list from ČHMÚ",
       "unknown": "Unexpected error occurred"
     },
     "abort": {
