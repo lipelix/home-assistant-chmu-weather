@@ -28,6 +28,7 @@ One device per station:
 - **Precipitation**
 - **Wind speed** and **wind direction**
 - **Weather description**: the national ČHMÚ text forecast
+- **Weather warning**, **Warning level** and **Warning change**: ČHMÚ warnings (výstrahy) for the station's ORP
 
 Sensors are created only for what the station measures. Each 10-minute measurement is also kept as hourly statistics.
 
@@ -35,6 +36,7 @@ Sensors are created only for what the station measures. Each 10-minute measureme
 
 - **Measured, not modelled.** Temperature, humidity, pressure, rain and wind come from one of ~475 ČHMÚ stations, refreshed every 10 minutes. The station nearest your Home location is picked for you.
 - **A forecast for your station, not for the country.** ČHMÚ's ALADIN model at 1 km resolution, sampled at your station's coordinates: 62–70 hours hourly and 3 days daily. Altitude counts: a hilltop station and the town below it get their own numbers.
+- **Official warnings for your area.** ČHMÚ issues storm, snow, heat and other warnings per ORP; you get the ones for your station's, with an event as soon as a new one is issued.
 - **Every measurement kept.** All six 10-minute readings of each hour are stored as hourly statistics (mean, min, max), so graphs show the whole day, not one point per hour.
 - **Nothing to configure.** Set up from the UI in one step. No account, token, YAML or analytics.
 
@@ -75,6 +77,33 @@ The weather entity works with any weather card, including the built-in ones. It 
 
 ČHMÚ's raw model output is ~70 MB per run, too much for Home Assistant to download. A [job in this repository](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/.github/workflows/forecast-data.yml) samples each new ALADIN CZ_1km run at ~750 station coordinates and publishes ~1.5 kB per station on GitHub Pages; your Home Assistant fetches only its own station's file. A forecast older than 18 hours logs a warning, a model run older than 48 hours is refused. Details in [`ARCHITECTURE.md`](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/custom_components/chmu/ARCHITECTURE.md).
 
+## Weather warnings
+
+ČHMÚ issues its warnings (výstrahy SIVS) per ORP, *obec s rozšířenou působností*. Each station gets three entities for the ORP it stands in:
+
+| Entity | State |
+|---|---|
+| **Weather warning** (binary sensor, safety) | on while at least one warning is in force |
+| **Warning level** | `none`, `yellow`, `orange` or `red`, the highest level in force |
+| **Warning change** (event) | `issued` when ČHMÚ issues a new warning, `cancelled` when it drops one before its end |
+
+The binary sensor's `warnings` attribute lists every warning that has not ended, including those that start later (`active: false`), with their description and instructions; `outlook` carries ČHMÚ's outlook text when there is one. States switch at the exact onset and end of each warning. A warning is announced by **Warning change** as soon as it is issued, usually hours before it takes effect:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: event.plzen_mikulka_warning_change
+    attribute: event_type
+    to: issued
+actions:
+  - action: notify.mobile_app_phone
+    data:
+      title: "ČHMÚ: {{ trigger.to_state.attributes.event }}"
+      message: "{{ trigger.to_state.attributes.description }}"
+```
+
+If your home lies across an ORP border from the station, pick the right ORP under **Configure** on the integration. ORP boundaries: [ČÚZK RÚIAN](https://cuzk.gov.cz) (CC BY 4.0), simplified to about 200 m.
+
 ## Hourly statistics
 
 Each 10-minute measurement is stored as hourly statistics (mean, min, max) named `chmu:{station}_{element}`, e.g. `chmu:11450_temperature`, ready for a Statistics graph card. Precipitation is not included.
@@ -87,4 +116,4 @@ Contributing: see [`DEVELOPMENT.md`](https://github.com/lipelix/home-assistant-c
 
 ## License
 
-MIT, see [LICENSE](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/LICENSE). Weather data: [ČHMÚ open data](https://opendata.chmi.cz).
+MIT, see [LICENSE](https://github.com/lipelix/home-assistant-chmu-weather/blob/main/LICENSE). Weather data: [ČHMÚ open data](https://opendata.chmi.cz) and [ČHMÚ warnings](https://vystrahy-cr.chmi.cz). ORP boundaries: ČÚZK RÚIAN, CC BY 4.0, simplified.

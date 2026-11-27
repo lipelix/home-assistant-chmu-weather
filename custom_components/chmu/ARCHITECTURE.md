@@ -192,6 +192,48 @@ Notes on the shape of this:
 - The recorder is an `after_dependencies` entry, not a dependency: without one
   the statistics are skipped with a warning and the sensors carry on.
 
+## Weather Warnings
+
+ČHMÚ publishes its warnings (výstrahy SIVS) as CAP 1.2 XML. One message is the
+complete national state: one `<info>` per phenomenon and language (`cs`,
+`en-GB`), each listing the ORPs it covers by ČSÚ code (`CISORP`), without any
+geometry.
+
+| Module | Role |
+|---|---|
+| `alerts.py` | Fetches and parses the message, decides what is in force, diffs two messages. No Home Assistant imports |
+| `orp.py` + `data/orp.json.gz` | Finds the ORP a station stands in (ray casting, nearest ORP within 5 km as fallback) |
+| `tools/build_orp.py` | Rebuilds `orp.json.gz` from ČÚZK RÚIAN (CC BY 4.0) and the ČSÚ codelist 65 |
+| `warning_entity.py` | Base entity: schedules a state write at the next onset or end |
+| `binary_sensor.py`, `sensor.py`, `event.py` | Warning in force, highest level, issued / cancelled events |
+
+Notes on the shape of this:
+
+- **Sources.** `https://vystrahy-cr.chmi.cz/data2/XOCZ50_OKPR.xml` is the
+  fixed file behind the CAP download on ČHMÚ's warnings site; it answers
+  `If-None-Match` with 304, so the 5 minute poll downloads the ~1.7 MB message
+  only when ČHMÚ issues a new one. It belongs to that web app, not to the
+  documented open data, so when it fails the newest `alert_cap_50_*.xml` from
+  `https://opendata.chmi.cz/meteorology/weather/alerts/cap/` is used instead,
+  at most every 30 minutes. The archive has no fixed name for the newest
+  message and its names are reused month after month, so it is picked by
+  modification time. All config entries share one `WarningsFeed`.
+- **What is a warning.** The message also lists "Žádná výstraha ..." for every
+  phenomenon without one, the outlook (event code `OUTLOOK`) and hydrological
+  notes. A warning is an `<info>` with `awareness_level` yellow, orange or red.
+- **In force** means `onset <= now < expires`. Some warnings (heat stress, fire
+  risk, flood vigilance) have no end and last until a later message drops them.
+- **Matching across messages.** ČHMÚ restates every warning in every update,
+  moving the onset and rewriting the texts, so a warning is identified by its
+  SIVS code and name only. A higher level is a different code (X.1 -> X.2) and
+  counts as a new warning. A warning that ran out is not "cancelled".
+- **ORP.** Each entry uses the ORP its station stands in, so two stations (home
+  and cottage) get the warnings for both places; the options override it.
+  Entries created before 1.9.0 have no stored coordinates and look them up
+  once from the station metadata. The polygons are simplified to 0.002°, which
+  leaves 473 of 474 stations inside one; Višňová, on the state border, gets the
+  nearest. ČHMÚ codes Prague as `1100`, the ČSÚ codelist as `1000`.
+
 ## API Details
 
 **Base URL:** `https://opendata.chmi.cz/meteorology/climate`
@@ -215,7 +257,7 @@ Notes on the shape of this:
    the `measured_at` attribute on every sensor
 
 **Timeout:** 30 seconds per request
-**Update Interval:** 10 minutes (measurements), 1 hour (forecast)
+**Update Interval:** 10 minutes (measurements), 1 hour (forecast), 5 minutes (warnings, 304 when unchanged)
 
 ## Security & Privacy
 
@@ -233,7 +275,10 @@ runs ruff, pytest, pyright, hassfest and HACS validation.
 - `forecast.py`, `statistics.py` and the API parsing are free of Home Assistant
   imports and tested from a bare virtualenv, with the clock pinned - the
   day/night and local-date rules made the suite clock-dependent before.
-- `tests/test_weather_ha.py` and `tests/test_statistics_ha.py` set the entry up
+- `alerts.py` is tested against real CAP messages cut down to a few ORPs
+  (`tests/fixtures/cap/`), `orp.py` against known stations.
+- `tests/test_weather_ha.py`, `tests/test_statistics_ha.py` and
+  `tests/test_warnings_ha.py` set the entry up
   in a real Home Assistant via `pytest-homeassistant-custom-component`; they
   skip when it is not installed. Network access is blocked there, so every
   request is mocked.

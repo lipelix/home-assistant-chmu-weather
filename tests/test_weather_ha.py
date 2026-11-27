@@ -38,6 +38,10 @@ from custom_components.chmu import (  # noqa: E402
 from custom_components.chmu.const import DOMAIN  # noqa: E402
 from custom_components.chmu.forecast import LOCAL_TIMEZONE  # noqa: E402
 
+# Every entry also polls the national warnings; keep that off the network
+# and out of the request counts (tests/conftest.py).
+pytestmark = pytest.mark.usefixtures("quiet_warnings")
+
 # The entity's condition, the local day boundary and the precipitation window
 # all depend on the clock, so the clock is pinned. Without this the suite
 # passed only during a nine-hour window each day: after local sunset the

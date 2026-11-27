@@ -34,6 +34,11 @@ SECOND_HOUR = FIRST_HOUR + timedelta(hours=1)
 TEMPERATURES = [18.1, 17.8, 17.7, 17.1, 16.9, 17.0]
 
 
+# Every entry also polls the national warnings; keep that off the network
+# and out of the request counts (tests/conftest.py).
+pytestmark = pytest.mark.usefixtures("quiet_warnings")
+
+
 def _history(hour: datetime, values: list[float]) -> list[list]:
     """Build the 10 minute rows of one hour as api.py collects them."""
     return [

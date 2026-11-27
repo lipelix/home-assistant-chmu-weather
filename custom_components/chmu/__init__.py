@@ -1,8 +1,9 @@
 """ČHMÚ Weather Integration."""
 
 import logging
-from dataclasses import dataclass
-from datetime import timedelta
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -12,12 +13,20 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .api import ChmuApi, MeasurementUnusable
+from .alerts import AreaWarnings, WarningsFeed, area_warnings
+from .api import ChmuApi, MeasurementUnusable, get_stations_with_coords
+from .const import CONF_LATITUDE, CONF_LONGITUDE, CONF_ORP, DOMAIN, ORP_AUTO
 from .forecast import ChmuForecastApi, ForecastUnusable, StationForecast
+from .orp import Orp, find_orp, load_orps
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.SENSOR, Platform.WEATHER]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.EVENT,
+    Platform.SENSOR,
+    Platform.WEATHER,
+]
 SCAN_INTERVAL = timedelta(minutes=10)
 
 # ALADIN publishes a new run every 6 hours. Polling hourly costs nothing worth
@@ -32,6 +41,13 @@ FORECAST_SCAN_INTERVAL = timedelta(hours=1)
 # _pace_forecast_polling for why a successful one is never hurried.
 FORECAST_RETRY_INTERVAL = timedelta(minutes=5)
 
+# The warnings file answers an unchanged poll with a 304, so polling often
+# costs nothing and keeps a new warning's delay short. Every entry shares one
+# download (alerts.WarningsFeed).
+WARNINGS_SCAN_INTERVAL = timedelta(minutes=5)
+
+WARNINGS_FEED = "warnings_feed"
+
 
 @dataclass
 class ChmuRuntimeData:
@@ -39,6 +55,9 @@ class ChmuRuntimeData:
 
     coordinator: DataUpdateCoordinator
     forecast_coordinator: DataUpdateCoordinator[StationForecast | None]
+    warnings_coordinator: DataUpdateCoordinator[AreaWarnings]
+    # The options the entry was set up with; a change to them reloads it.
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 # Config entry carrying the runtime data above, so the platforms get the
@@ -131,6 +150,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
         _pace_forecast_polling(False)
         return forecast
 
+    feed: WarningsFeed = hass.data.setdefault(DOMAIN, {}).setdefault(
+        WARNINGS_FEED, WarningsFeed()
+    )
+    resolved_orp: Orp | None = None
+
+    async def async_update_warnings() -> AreaWarnings:
+        """Fetch the national warnings and keep those for this entry's ORP."""
+        nonlocal resolved_orp
+        if resolved_orp is None:
+            resolved_orp = await _async_resolve_orp(hass, entry)
+
+        try:
+            message = await hass.async_add_executor_job(feed.get, datetime.now(UTC))
+        except Exception as err:
+            raise UpdateFailed(f"Could not fetch the ČHMÚ warnings: {err}") from err
+
+        return area_warnings(
+            message, resolved_orp.code, resolved_orp.name, hass.config.language
+        )
+
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
@@ -146,11 +185,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
         update_interval=FORECAST_SCAN_INTERVAL,
     )
 
+    warnings_coordinator = DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name=f"ČHMÚ warnings {station_id}",
+        update_method=async_update_warnings,
+        update_interval=WARNINGS_SCAN_INTERVAL,
+    )
+
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = ChmuRuntimeData(
         coordinator=coordinator,
         forecast_coordinator=forecast_coordinator,
+        warnings_coordinator=warnings_coordinator,
+        options=dict(entry.options),
     )
 
     # The forecast is fetched from a static site over the public internet and
@@ -162,10 +211,70 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool
         forecast_coordinator.async_refresh(),
         name=f"chmu initial forecast {station_id}",
     )
+    # Likewise the warnings: the entities exist and read as unavailable until
+    # the first message arrives.
+    entry.async_create_background_task(
+        hass,
+        warnings_coordinator.async_refresh(),
+        name=f"chmu initial warnings {station_id}",
+    )
+    entry.async_on_unload(entry.add_update_listener(_async_entry_updated))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
+
+
+async def _async_resolve_orp(hass: HomeAssistant, entry: ChmuConfigEntry) -> Orp:
+    """Return the ORP whose warnings this entry shows.
+
+    The one chosen in the options, or else the one the station stands in.
+    Entries created before the station's coordinates were stored look them up
+    once and keep them.
+    """
+    orps = await hass.async_add_executor_job(load_orps)
+
+    chosen = entry.options.get(CONF_ORP, ORP_AUTO)
+    if chosen != ORP_AUTO:
+        for orp in orps:
+            if orp.code == chosen:
+                return orp
+        raise UpdateFailed(f"Unknown ORP {chosen}; choose another in the options")
+
+    latitude = entry.data.get(CONF_LATITUDE)
+    longitude = entry.data.get(CONF_LONGITUDE)
+    if latitude is None or longitude is None:
+        station_id = entry.data["station_id"]
+        stations = await hass.async_add_executor_job(get_stations_with_coords)
+        station = stations.get(station_id)
+        if station is None:
+            raise UpdateFailed(
+                f"Coordinates of station {station_id} are unknown, so its ORP "
+                "cannot be found; choose the ORP in the options"
+            )
+        latitude, longitude = station["latitude"], station["longitude"]
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, CONF_LATITUDE: latitude, CONF_LONGITUDE: longitude},
+        )
+
+    orp = await hass.async_add_executor_job(find_orp, latitude, longitude)
+    if orp is None:
+        raise UpdateFailed(
+            f"Station at {latitude}, {longitude} lies in no Czech ORP; "
+            "choose the ORP in the options"
+        )
+    return orp
+
+
+async def _async_entry_updated(hass: HomeAssistant, entry: ChmuConfigEntry) -> None:
+    """Reload when the options changed.
+
+    Storing the station's coordinates updates the entry too, and that must not
+    reload it.
+    """
+    if dict(entry.options) != entry.runtime_data.options:
+        await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ChmuConfigEntry) -> bool:
