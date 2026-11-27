@@ -277,6 +277,19 @@ def highest_level(warnings: Iterable[WeatherWarning], now: datetime) -> str:
     return max(active, key=LEVELS.__getitem__, default=LEVEL_NONE)
 
 
+def active_events(warnings: Iterable[WeatherWarning], now: datetime) -> list[str]:
+    """Name what is in force, most severe first, each phenomenon once.
+
+    ČHMÚ names the phenomenon itself ("Ledovka", "Velmi rizikové sněhové
+    jevy", "Silný vítr"), and the same one can be listed twice for two periods.
+    """
+    active = sorted(
+        (w for w in warnings if w.level is not None and w.is_active(now)),
+        key=lambda w: (-LEVELS[w.level or ""], *_chronological(w)),
+    )
+    return list(dict.fromkeys(w.event for w in active))
+
+
 def next_change(warnings: Iterable[WeatherWarning], now: datetime) -> datetime | None:
     """Return when the set of warnings in force next changes on its own."""
     moments = [

@@ -28,7 +28,7 @@ One device per station:
 - **Precipitation**
 - **Wind speed** and **wind direction**
 - **Weather description**: the national ČHMÚ text forecast
-- **Weather warning**, **Warning level** and **Warning change**: ČHMÚ warnings (výstrahy) for the station's ORP
+- **Weather warning**, **Warning level**, **Active warnings** and **Warning change**: ČHMÚ warnings (výstrahy) for the station's ORP
 
 Sensors are created only for what the station measures. Each 10-minute measurement is also kept as hourly statistics.
 
@@ -79,12 +79,13 @@ The weather entity works with any weather card, including the built-in ones. It 
 
 ## Weather warnings
 
-ČHMÚ issues its warnings (výstrahy SIVS) per ORP, *obec s rozšířenou působností*. Each station gets three entities for the ORP it stands in:
+ČHMÚ issues its warnings (výstrahy SIVS) per ORP, *obec s rozšířenou působností*. Each station gets four entities for the ORP it stands in:
 
 | Entity | State |
 |---|---|
 | **Weather warning** (binary sensor, safety) | on while at least one warning is in force |
 | **Warning level** | `none`, `yellow`, `orange` or `red`, the highest level in force |
+| **Active warnings** | what is in force, in ČHMÚ's words, most severe first: `Ledovka, Silný vítr` |
 | **Warning change** (event) | `issued` when ČHMÚ issues a new warning, `cancelled` when it drops one before its end |
 
 The binary sensor's `warnings` attribute lists every warning that has not ended, including those that start later (`active: false`), with their description and instructions; `outlook` carries ČHMÚ's outlook text when there is one. States switch at the exact onset and end of each warning. A warning is announced by **Warning change** as soon as it is issued, usually hours before it takes effect:

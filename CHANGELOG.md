@@ -12,7 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   station gets a **Weather warning** binary sensor (on while a warning is in
   force, every warning that has not ended in its `warnings` attribute, the
   outlook in `outlook`), a **Warning level** sensor (`none`, `yellow`,
-  `orange`, `red`) and a **Warning change** event entity that fires `issued`
+  `orange`, `red`), an **Active warnings** sensor naming what is in force in
+  ČHMÚ's words ("Ledovka, Silný vítr", most severe first) and a
+  **Warning change** event entity that fires `issued`
   as soon as ČHMÚ issues a warning, usually hours before it starts, and
   `cancelled` when one is dropped early. States switch at each warning's exact
   onset and end. The message is polled every 5 minutes and downloaded only
